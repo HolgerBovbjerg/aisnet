@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from data2vec.modules.EMA import EMA
+from source.nnet.modules.EMA import EMA
 from typing import Optional
 
 

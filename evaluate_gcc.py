@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from source.datasets.binaural_librispeech.BinauralLibriSpeechDataset import BinauralLibriSpeechDataset
-from source.nnet import GCCPHATDoA
+from source.models.doa import GCCPHATDoA
 from source.metrics import angular_error, doa_threshold_accuracy
 
 
