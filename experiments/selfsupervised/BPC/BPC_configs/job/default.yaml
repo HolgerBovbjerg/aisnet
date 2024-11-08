@@ -1,0 +1,7 @@
+exp_dir: ./BPC_runs/
+exp_name: BPC_D64L4H8_BPC_pretrain_960h_noisy_no_cafe
+log_interval: 10
+validation_interval: null
+pin_memory: False
+num_workers: 4
+device: auto

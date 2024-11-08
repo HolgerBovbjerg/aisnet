@@ -1,0 +1,4 @@
+root_dir: ${data_path}BinauralLibriSpeech/horizontal_plane_front_only
+metadata_filename: metadata.csv
+split: test-clean
+batch_size: 1

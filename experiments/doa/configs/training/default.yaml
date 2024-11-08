@@ -1,0 +1,4 @@
+seed: 0
+num_epochs: 10
+clip_grad_norm: null
+gradient_accumulation_steps: 1

@@ -1,0 +1,8 @@
+rir:
+    rir_paths: ${data_path}/rirs_noises/simulated_rirs
+    p: 0.5
+noise:
+    noise_paths: ${data_path}/Musan/noise
+    snr_db_min: -5
+    snr_db_max: 20
+    p: 0.5

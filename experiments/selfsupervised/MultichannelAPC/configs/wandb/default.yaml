@@ -1,0 +1,7 @@
+enabled: False
+project: "wandb_project_name"
+entity: "wandb_entity"
+name: ${job.exp_name}
+group: ${job.exp_name}
+job_type: "train"
+tags: null

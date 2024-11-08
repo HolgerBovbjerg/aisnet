@@ -1,0 +1,4 @@
+defaults:
+  - train: librispeech_test_clean
+  - validation: librispeech_test_clean
+  - test: librispeech_test_clean

@@ -1,0 +1,20 @@
+type: cnn
+config:
+    in_channels:
+        - 1
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+    out_channels:
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+        - ${model.encoder_embedding_dim}
+    kernel_sizes: [10, 8, 4, 4, 4]
+    strides: [5, 4, 2, 2, 2]
+    causal: True
+    stacked_consecutive_features: 1
+    stacked_features_stride: 1
+    sample_rate: 16000

@@ -1,0 +1,18 @@
+defaults:
+    - model: default
+    - data: default
+    - augment: default
+    - loss: cross_entropy
+    - optimizer: adamw
+    - scheduler: cosine_annealing
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - _self_
+
+experiment_type: "example"
+start_stage: 0
+stop_stage: 100
+data_path: /Users/JG96XG/Desktop/data_sets
+

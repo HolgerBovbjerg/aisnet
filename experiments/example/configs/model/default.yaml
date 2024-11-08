@@ -1,0 +1,5 @@
+num_filters: 5
+encoder_embedding_dim: 16
+sample_rate: 16000
+encoder_layers: 1
+n_classes: 251

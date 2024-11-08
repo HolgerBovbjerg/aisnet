@@ -1,0 +1,9 @@
+type: lstm
+config:
+    input_dim: ${model.feature_dim}
+    hidden_dim: ${model.embedding_dim}
+    num_layers: 3
+    bias: True
+    dropout: 0.
+    projection_size: 0
+    bidirectional: False

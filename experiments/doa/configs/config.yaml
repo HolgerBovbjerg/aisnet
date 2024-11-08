@@ -1,0 +1,18 @@
+defaults:
+    - model: default
+    - data: default
+    - augment: default
+    - loss: l1
+    - optimizer: adamw
+    - scheduler: cosine_annealing_warmup_restart
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - _self_
+
+experiment_type: "doa"
+start_stage: 0
+stop_stage: 100
+data_path: /Users/JG96XG/Desktop/data_sets/
+

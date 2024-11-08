@@ -1,0 +1,9 @@
+exp_dir: ./runs/example
+exp_name: example_experiment
+log_interval: 10
+validation_interval: 10000
+pin_memory: False
+num_workers: 4
+device:
+    name: cpu
+    backend: null

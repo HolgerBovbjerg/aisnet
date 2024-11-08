@@ -1,0 +1,6 @@
+defaults:
+  - train: librispeech_dev_clean
+  - validation: librispeech_dev_clean
+  - test: librispeech_test_clean
+
+batch_size: 5

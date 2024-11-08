@@ -1,0 +1,14 @@
+rir:
+    rir_paths:
+        - ${data_path}rirs_noises/
+    p: 0.5
+noise:
+    noise_paths:
+        - ${data_path}noise_files/kolbaek_noise_files/bbl/
+        - ${data_path}noise_files/kolbaek_noise_files/bus/
+        - ${data_path}noise_files/kolbaek_noise_files/ped/
+        - ${data_path}noise_files/kolbaek_noise_files/ssn/
+        - ${data_path}noise_files/kolbaek_noise_files/str/
+    snr_db_min: -5
+    snr_db_max: 20
+    p: 0.5

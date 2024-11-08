@@ -1,0 +1,2 @@
+run:
+    dir: ${job.exp_dir}/${job.exp_name}/${now:%Y-%m-%d_%H-%M-%S}

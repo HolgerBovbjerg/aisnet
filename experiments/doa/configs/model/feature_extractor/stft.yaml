@@ -1,0 +1,8 @@
+type: stft
+config:
+    sample_rate: 16000
+    n_fft: 127
+    window_length: 400
+    hop_length: 160
+    window_type: "hann"
+    pad_mode: "constant"

@@ -1,0 +1,30 @@
+defaults:
+    - job: default
+    - data: default
+    - model: deep_cnn
+    - augment: default
+    - loss: l1
+    - optimizer: adamw
+    - scheduler: cosine_annealing_warmup_restart
+    - training: default
+    - _self_
+
+job:
+    exp_dir: ./BPC_runs/
+    exp_name: BPC_D64L4H8_BPC_pretrain_960h_noisy_no_cafe
+    device: cpu
+
+hydra:
+    run:
+        dir: ${job.exp_dir}${job.exp_name}_${now:%Y-%m-%d_%H-%M-%S}
+
+wandb:
+    enabled: False
+    project: "BPC_test"
+    entity: "ais-es-aau"
+    name: ${job.exp_name}
+    group: ${job.exp_name}
+    job_type: "train"
+    tags: null
+
+data_path: /users/bovbjerg/Data/

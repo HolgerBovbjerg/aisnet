@@ -1,0 +1,4 @@
+num_filters: 10
+encoder_embedding_dim: 10
+sample_rate: 16000
+encoder_layers: 1

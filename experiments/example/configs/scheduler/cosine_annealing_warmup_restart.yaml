@@ -1,0 +1,10 @@
+scheduler_type: cosine_annealing_warmup_restarts
+scheduler_kwargs:
+    first_cycle_steps: 10000
+    cycle_mult : 0.9
+    max_lr : ${training.lr}
+    min_lr : 0.0000005
+    warmup_steps : 3000
+    gamma : 0.5
+    last_epoch : -1
+steps_per_epoch: 1
