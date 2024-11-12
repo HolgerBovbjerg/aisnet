@@ -161,6 +161,10 @@ class ExampleTrainer:
                    #resume=config.wandb.resume)
                    #id=self.wandb_id)
         wandb.config.update(OmegaConf.to_container(config, resolve=True, throw_on_missing=True))
+        if config.wandb.watch_model:
+            wandb.watch(models=self.model,
+                        log=config.wandb.watch_model_log,
+                        log_freq=config.wandb.watch_model_log_frequency)
 
     def setup_scheduler(self, config):
         scheduler_config = OmegaConf.to_object(config.scheduler)
