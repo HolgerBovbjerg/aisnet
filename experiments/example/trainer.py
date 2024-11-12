@@ -82,7 +82,7 @@ class ExampleTrainer:
             if torch.cuda.is_available():
                 self.scaler = torch.amp.GradScaler(device="cuda")
             else:
-                logger.info("'use_cuda_amp is set to True but CUDA is not available. Reverting training without AMP.")
+                logger.info("'use_cuda_amp is set to True but CUDA is not available. Reverting to training without AMP.")
                 self.use_cuda_amp = False
 
         # Data loaders

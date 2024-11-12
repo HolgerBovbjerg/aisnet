@@ -145,8 +145,8 @@ def pad_collate(batch, augmentor: Callable = lambda x: x):
     lengths = torch.tensor([waveform.size(0) for waveform in waveforms])
     speaker_id = torch.tensor([data[3] for data in batch])
 
-    waveforms_padded = pad_sequence(waveforms, batch_first=True, padding_value=0)
-    waveforms_padded = augmentor(waveforms_padded.transpose(-1, -2))
+    waveforms_padded = pad_sequence(waveforms, batch_first=True, padding_value=0).transpose(-1, -2)
+    waveforms_padded = augmentor(waveforms_padded)
 
     return waveforms_padded, lengths, speaker_id
 
