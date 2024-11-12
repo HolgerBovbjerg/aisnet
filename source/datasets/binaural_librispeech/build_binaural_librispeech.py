@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
         pool.close()
         pool.join()
-        metadata = pd.DataFrame(metadata)
-        metadata.to_csv(f"{save_root}/metadata.csv", index=False)
+        metadata_df = pd.DataFrame(metadata)
+        metadata_df.to_csv(f"{save_root}/metadata.csv", index=False)
 
     print("done")

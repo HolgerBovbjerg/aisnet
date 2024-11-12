@@ -21,4 +21,6 @@ torchaudio
 torchdata
 tqdm
 transformers
+wandb
+webdataset
 xlstm

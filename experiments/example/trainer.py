@@ -19,6 +19,25 @@ from source.scheduler import get_scheduler
 logger = logging.getLogger(__name__)
 
 
+def transform_speaker_ids_to_labels(speaker_ids_tensor, label_mapping):
+    """Transforms a tensor of speaker IDs into corresponding class labels."""
+    # Create a mapping tensor based on the provided dictionary
+    # Assuming label_mapping is in the format {speaker_id: class_label}
+    max_speaker_id = max(label_mapping.keys())
+
+    # Create a tensor to hold the class labels, initializing with -1 (or any invalid label)
+    label_tensor = torch.full((max_speaker_id + 1,), -1, dtype=torch.long)
+
+    # Populate the tensor with the class labels based on the label mapping
+    for speaker_id, class_label in label_mapping.items():
+        label_tensor[speaker_id] = class_label
+
+    # Use the label tensor to transform the input speaker_ids_tensor
+    transformed_labels = label_tensor[speaker_ids_tensor]
+
+    return transformed_labels
+
+
 class ExampleTrainer:
     """
     Example Trainer class for training encoder.
@@ -30,7 +49,7 @@ class ExampleTrainer:
                  train_loader: DataLoader,
                  val_loader: DataLoader,
                  label_mapping: dict,
-                 distributed: bool = False, ):
+                 distributed: bool = False):
 
         # Experiment settings
         self.distributed = distributed
@@ -46,18 +65,25 @@ class ExampleTrainer:
         self.save_dir = os.path.join(config.job.exp_dir, config.job.exp_name)
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
-        logger.info(f'Saving results in {self.save_dir}.')
+        logger.info('Saving results in %s.', self.save_dir)
         # self.wandb_id = None
 
         # Training settings
         self.num_epochs = config.training.num_epochs
         self.clip_grad_norm = config.training.clip_grad_norm
         if self.clip_grad_norm:
-            logger.info(f'Clipping gradient norm at {self.clip_grad_norm}.')
+            logger.info('Clipping gradient norm at %s.', self.clip_grad_norm)
         self.gradient_accumulation_steps = 1 if config.training.gradient_accumulation_steps is None else config.training.gradient_accumulation_steps
         if self.gradient_accumulation_steps > 1:
-            logger.info(f'Using {self.gradient_accumulation_steps} gradient accumulation steps.'
-                        f'Effective batch size will be {self.gradient_accumulation_steps} times larger.')
+            logger.info('Using %s gradient accumulation steps. Effective batch size will be %s times larger.',
+                        self.gradient_accumulation_steps, self.gradient_accumulation_steps)
+        self.use_cuda_amp = config.training.use_cuda_amp # whether Autmotaic Mixed Precision is used
+        if self.use_cuda_amp:
+            if torch.cuda.is_available():
+                self.scaler = torch.amp.GradScaler(device="cuda")
+            else:
+                logger.info("'use_cuda_amp is set to True but CUDA is not available. Reverting training without AMP.")
+                self.use_cuda_amp = False
 
         # Data loaders
         self.train_loader = train_loader
@@ -178,23 +204,35 @@ class ExampleTrainer:
         self.accumulated_steps = 0
         self.last_log_step = self.steps
 
-    def transform_speaker_ids_to_labels(self, speaker_ids_tensor, label_mapping):
-        """Transforms a tensor of speaker IDs into corresponding class labels."""
-        # Create a mapping tensor based on the provided dictionary
-        # Assuming label_mapping is in the format {speaker_id: class_label}
-        max_speaker_id = max(label_mapping.keys())
+    def forward_pass(self, data):
+        # Unpack data
+        input_data, lengths, targets = data
+        # Transfer data to device
+        input_data, lengths, targets = (input_data.to(self.device),
+                                        lengths.to(self.device),
+                                        targets.to(self.device))
+        # Make prediction
+        predictions = self.model(input_data, lengths=lengths)
+        # Generate target labels
+        targets = transform_speaker_ids_to_labels(targets, self.label_mapping)
+        # Compute loss
+        loss = self.criterion(predictions, targets)
 
-        # Create a tensor to hold the class labels, initializing with -1 (or any invalid label)
-        label_tensor = torch.full((max_speaker_id + 1,), -1, dtype=torch.long)
+        return loss
 
-        # Populate the tensor with the class labels based on the label mapping
-        for speaker_id, class_label in label_mapping.items():
-            label_tensor[speaker_id] = class_label
+    def backward_pass(self, loss):
+        if self.use_cuda_amp:
+            self.scaler.scale(loss).backward()
+        else:
+            loss.backward()
 
-        # Use the label tensor to transform the input speaker_ids_tensor
-        transformed_labels = label_tensor[speaker_ids_tensor]
-
-        return transformed_labels
+    def update_model(self):
+        if ((self.batch_index + 1) % self.gradient_accumulation_steps) == 0:
+            if self.use_cuda_amp:
+                self.scaler.unscale_(self.optimizer)
+            if self.clip_grad_norm:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
+            self.step()
 
     def train_one_batch(self, data):
         """
@@ -203,38 +241,37 @@ class ExampleTrainer:
         :param data: tuple of data from data loader
         :return: loss: float
         """
-        input_data, lengths, targets = data
-        input_data, lengths, targets = (input_data.to(self.device),
-                                        lengths.to(self.device),
-                                        targets.to(self.device))
 
-        self.optimizer.zero_grad()
+        # CUDA mixed precision context manager, AMP is disabled if self.use_cuda_amp=False
+        with torch.autocast(device_type="cuda", enabled=self.use_cuda_amp):
+            # Forward pass
+            loss = self.forward_pass(data)
+            # Divide loss by number of gradient accumulation steps
+            if self.gradient_accumulation_steps > 1:
+                loss = loss / self.gradient_accumulation_steps
 
-        # Forward pass
-        predictions = self.model(input_data, lengths=lengths)
-
-        # Compute loss and gradients
-        targets = self.transform_speaker_ids_to_labels(targets, self.label_mapping)
-        loss = self.criterion(predictions, targets)
-        loss = loss / self.gradient_accumulation_steps
-        loss.backward()
-
-        if self.clip_grad_norm:
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
+        # Backward pass
+        self.backward_pass(loss)
 
         # Update model
-        if ((self.batch_index + 1) % self.gradient_accumulation_steps) == 0:
-            self.step()
+        self.update_model()
 
-        # Get values
-        loss = loss.item() * self.gradient_accumulation_steps
-
+        # Get batch loss value without after unscaling by gradient_accumulation_steps
+        loss = loss.item()
+        if self.gradient_accumulation_steps > 1:
+            loss *= self.gradient_accumulation_steps
         return loss
 
     def step(self):
-        self.optimizer.step()
+        if self.use_cuda_amp:
+            self.scaler.step(self.optimizer)  # Update weights
+            self.scaler.update()  # Update scaler for next step
+        else:
+            self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
+
+        self.optimizer.zero_grad()
         self.steps += 1
 
     def train_one_epoch(self) -> None:
