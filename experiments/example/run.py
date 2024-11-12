@@ -22,18 +22,16 @@ def distributed_setup(backend: str = "nccl"):
     world_size = int(os.environ["WORLD_SIZE"])
     gpus_per_node = int(os.environ["SLURM_GPUS_ON_NODE"])
     assert gpus_per_node == torch.cuda.device_count()
-    print(f"Setting up distributed process group on {rank} of {world_size} on {gethostname()} where there are" \
-          f" {gpus_per_node} allocated GPUs per node.", flush=True)
+    logger.info(f"Setting up distributed process group on {rank} of {world_size} on {gethostname()} where there are"
+                f" {gpus_per_node} allocated GPUs per node.")
     init_process_group(rank=rank, world_size=world_size, backend=backend)
     if rank == 0:
-        print(f"Group initialized? {dist.is_initialized()}", flush=True)
+        logger.info(f"Group initialized? {dist.is_initialized()}")
 
 
 def distributed_cleanup():
     logger.info("Destroying all distributed processes and cleaning up.")
     destroy_process_group()
-
-
 
 def model_training(config, distributed: bool = False):
     if distributed:

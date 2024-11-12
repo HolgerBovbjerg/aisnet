@@ -10,7 +10,7 @@ from omegaconf import OmegaConf, DictConfig
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader
 
-from source.utils import seed_everything, get_device, get_local_rank
+from source.utils import get_device
 from source.loss import get_loss
 from source.metrics import equal_error_rate
 from source.optimizer import get_optimizer
