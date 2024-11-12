@@ -6,20 +6,19 @@ from .vicreg_loss import VICRegLoss
 
 
 def get_loss(name: str, ignore_index=-1, **kwargs):
-    if name == "weighted_pairwise":
-        return WeightedPairwiseLoss(**kwargs, ignore_index=ignore_index)
-    elif name == "cross_entropy":
-        return nn.CrossEntropyLoss(ignore_index=ignore_index)
-    elif name == "l1":
-        return nn.L1Loss()
-    elif name == "smooth_l1":
-        return nn.SmoothL1Loss(**kwargs)
-    elif name == "MSE":
-        return nn.MSELoss()
-    elif name == "VICReg":
-        return VICRegLoss(**kwargs)
-    else:
-        raise ValueError(f"Loss with name: {name}, not supported.")
+    loss_classes = {
+        "weighted_pairwise": WeightedPairwiseLoss,
+        "cross_entropy": nn.CrossEntropyLoss,
+        "l1": nn.L1Loss,
+        "smooth_l1": nn.SmoothL1Loss,
+        "MSE": nn.MSELoss,
+        "VICReg": VICRegLoss
+    }
+
+    if name in loss_classes:
+        return loss_classes[name](**kwargs, ignore_index=ignore_index) if name != "cross_entropy" else loss_classes[name](ignore_index=ignore_index)
+
+    raise ValueError(f"Loss with name: {name}, not supported.")
 
 
 if __name__ == "__main__":

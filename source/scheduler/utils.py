@@ -5,7 +5,7 @@ from .cosine_annealing_warm_restarts import CosineAnnealingWarmupRestarts
 from .warmup_lr import WarmUpLR
 
 
-def get_scheduler(optimizer: optim.Optimizer, scheduler_type: str, t_max: int, **kwargs) -> lr_scheduler._LRScheduler:
+def get_scheduler(optimizer: optim.Optimizer, scheduler_type: str, t_max: int = None, **kwargs) -> lr_scheduler._LRScheduler:
     """Gets scheduler.
     Args:
         optimizer (optim.Optimizer): Optimizer instance.
@@ -17,18 +17,17 @@ def get_scheduler(optimizer: optim.Optimizer, scheduler_type: str, t_max: int, *
         lr_scheduler._LRScheduler: Scheduler instance.
     """
 
-    if scheduler_type == "reduce_on_plateau":
-        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, **kwargs)
-    elif scheduler_type == "cosine_annealing":
-        scheduler = lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=t_max, **kwargs)
-    elif scheduler_type == "1cycle":
-        scheduler = lr_scheduler.OneCycleLR(optimizer=optimizer, total_steps=t_max, **kwargs)
-    elif scheduler_type == "cosine_annealing_warmup_restarts":
-        scheduler = CosineAnnealingWarmupRestarts(optimizer=optimizer, **kwargs)
-    else:
-        raise ValueError(f"Unsupported scheduler type: {scheduler_type}")
+    scheduler_classes = {
+        "reduce_on_plateau": lambda: lr_scheduler.ReduceLROnPlateau(optimizer, **kwargs),
+        "cosine_annealing": lambda: lr_scheduler.CosineAnnealingLR(optimizer, T_max=t_max, **kwargs),
+        "1cycle": lambda: lr_scheduler.OneCycleLR(optimizer, total_steps=t_max, **kwargs),
+        "cosine_annealing_warmup_restarts": lambda: CosineAnnealingWarmupRestarts(optimizer, **kwargs)
+    }
 
-    return scheduler
+    if scheduler_type in scheduler_classes:
+        return scheduler_classes[scheduler_type]()
+
+    raise ValueError(f"Unsupported scheduler type: {scheduler_type}")
 
 
 if __name__ == "__main__":
