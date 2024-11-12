@@ -19,7 +19,8 @@ class AddRIR(torch.nn.Module):
                                               compensate_for_propagation_delay=self.compensate_for_propagation_delay,
                                               mode=self.mode,
                                               p=self.p,
-                                              sample_rate=self.sampling_rate)
+                                              sample_rate=self.sampling_rate,
+                                              output_type="dict")
 
     def forward(self, x):
-        return self.apply_rir(x)
+        return self.apply_rir(x).samples

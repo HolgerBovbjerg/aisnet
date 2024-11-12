@@ -17,8 +17,9 @@ class AddNoise(torch.nn.Module):
                                             sample_rate=self.sampling_rate,
                                             min_snr_in_db=self.snr_db_min,
                                             max_snr_in_db=self.snr_db_max,
-                                            p=self.p)
+                                            p=self.p,
+                                            output_type="dict")
 
     def forward(self, x: torch.Tensor):
-        return self.add_noise(x)
+        return self.add_noise(x).samples
 
