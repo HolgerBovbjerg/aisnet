@@ -5,3 +5,5 @@ gradient_accumulation_steps: 4
 use_cuda_amp: True
 clip_grad_norm: 1
 lr: 0.01
+early_stopping_min_epochs: 10
+early_stopping_patience: 3

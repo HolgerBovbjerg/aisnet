@@ -15,7 +15,7 @@ logger = getLogger(__name__)
 
 @dataclass
 class ModelConfig:
-    num_filters: int = 40
+    num_features: int = 40
     encoder_embedding_dim: int = 64
     sample_rate: int = 16000
     encoder_layers: int = 1
@@ -28,10 +28,10 @@ class Model(nn.Module):
     """
 
     def __init__(self,
-                 cfg: ModelConfig = None):
+                 cfg: ModelConfig = ModelConfig()):
         super().__init__()
-        self.stft = STFT(n_fft=cfg.num_filters*2-1, window_length=400, hop_length=400, sample_rate=cfg.sample_rate)
-        self.encoder = nn.LSTM(input_size=cfg.num_filters,
+        self.stft = STFT(n_fft=cfg.num_features*2-1, window_length=400, hop_length=400, sample_rate=cfg.sample_rate)
+        self.encoder = nn.LSTM(input_size=cfg.num_features,
                                hidden_size=cfg.encoder_embedding_dim,
                                num_layers=cfg.encoder_layers,
                                batch_first=True)

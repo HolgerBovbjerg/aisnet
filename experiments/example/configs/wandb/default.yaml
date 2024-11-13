@@ -5,7 +5,7 @@ name: ${job.exp_name} # Name of experiment.
 group: ${job.exp_name} # Specify an experiment group to enabl organization individual runs into a larger group. For example, runs with different seeds.
 job_type: null # Specify the type of run, e.g., "train".
 tags: null # A list of strings, which will populate the list of tags on this run in the UI.
-watch_model: False # Whether to log model parameters and gradients on wandb
+watch_model: True # Whether to log model parameters and gradients on wandb
 watch_model_log_frequency: 1000 # Logs model every "step". Ignored if watch_model=False.
 watch_model_log: "all" # "gradients", "parameters", or "all". Ignored if watch_model=False.
 #resume: allow

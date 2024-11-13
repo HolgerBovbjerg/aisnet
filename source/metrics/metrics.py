@@ -43,3 +43,8 @@ def equal_error_rate(pred: np.ndarray, target: np.ndarray):
     fpr, tpr, thresholds = roc_curve(target.flatten(), pred.flatten())
     eer = brentq(lambda x: 1. - x - interp1d(fpr, tpr)(x), 0., 1.)
     return eer
+
+def accuracy(predictions: torch.Tensor, targets: torch.Tensor):
+    predicted_classes = predictions.argmax(dim=-1)
+    correct = (predicted_classes == targets).sum().item()
+    return correct / len(targets)

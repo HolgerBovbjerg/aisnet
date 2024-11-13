@@ -25,6 +25,7 @@ def distributed_setup(backend: str = "nccl"):
     logger.info(f"Setting up distributed process group on {rank} of {world_size} on {gethostname()} where there are"
                 f" {gpus_per_node} allocated GPUs per node.")
     init_process_group(rank=rank, world_size=world_size, backend=backend)
+    dist.barrier()
     if rank == 0:
         logger.info(f"Group initialized? {dist.is_initialized()}")
 
@@ -46,6 +47,8 @@ def model_training(config, distributed: bool = False):
     logger.info("Setting up trainer.")
     trainer = setup_trainer(config, model, train_loader, val_loader, label_mapping, distributed=distributed)
     logger.info("Starting training.")
+    if distributed:
+        dist.barrier()
     trainer.train()
     logger.info("Finished training.")
 
