@@ -19,7 +19,7 @@ def transform_speaker_ids_to_labels(speaker_ids_tensor, label_mapping):
     max_speaker_id = max(label_mapping.keys())
 
     # Create a tensor to hold the class labels, initializing with -1 (or any invalid label)
-    label_tensor = torch.full((max_speaker_id + 1,), -1, dtype=torch.long)
+    label_tensor = torch.full((max_speaker_id + 1,), -1, dtype=torch.long, device=speaker_ids_tensor.device)
 
     # Populate the tensor with the class labels based on the label mapping
     for speaker_id, class_label in label_mapping.items():
