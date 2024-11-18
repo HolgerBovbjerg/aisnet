@@ -87,6 +87,9 @@ def get_dataset_path(datasets, name):
 
 
 def download_librispeech_split(librispeech_root, split):
+    if Path(librispeech_root / split).is_dir():
+        logger.info(f"Dataset '{split}' already exists in {librispeech_root}. Skipping download...")
+        return
     path = check_database("LibriSpeech")
     if path is None:
         raise ValueError("LibriSpeech not found in database.")
@@ -135,6 +138,10 @@ def extract_tar(file_path, extract_to):
 
 def download_musan_data(base_dir='Musan'):
     """Downloads and extracts the Musan noise dataset."""
+    if Path(base_dir).is_dir():
+        logger.info(f"Dataset 'Musan' already exists in {base_dir}. Skipping download...")
+        return
+
     os.makedirs(base_dir, exist_ok=True)
 
     # URLs for Musan dataset components
@@ -188,7 +195,6 @@ def create_speaker_mapping(librispeech_root_dir, split):
 
 def prepare_data(config):
     logger.info("Preparing data")
-
 
     train_data_config = config.data.train
     validation_data_config = config.data.validation
