@@ -69,6 +69,7 @@ class ExampleTrainer(BaseTrainer):
 
     # Define custom function to compute metrics. Should always return a dict with 'metric_name: value' key/value pairs.
     def compute_batch_metrics(self, loss, predictions, targets):
+        predictions, targets = predictions.to("cpu"), targets.to("cpu")
         return {"loss": loss,
                 "accuracy": accuracy(predictions, targets),
                 "EER": equal_error_rate(predictions.numpy(), F.one_hot(targets, num_classes=predictions.size(-1)).numpy())}
@@ -114,7 +115,7 @@ class ExampleTrainer(BaseTrainer):
                 predictions = torch.cat([pos_similarity, neg_similarity])
                 targets = torch.cat([pos_labels, neg_labels])
 
-                eer = equal_error_rate(predictions.numpy(), targets.numpy())
+                eer = equal_error_rate(predictions.cpu().numpy(), targets.cpu().numpy())
 
                 # Accumulate
                 total_eer += eer
