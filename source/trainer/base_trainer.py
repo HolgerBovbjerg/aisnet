@@ -49,7 +49,7 @@ class BaseTrainer:
 
         self.seed = config.training.seed
         self.device = self.local_rank if distributed else get_device(config.job.device.name)
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and (config.job.device.name != "cpu"):
             torch.cuda.set_device(self.device)
         self.save_dir = os.path.join(config.job.exp_dir, config.job.exp_name)
         if not os.path.exists(self.save_dir):
