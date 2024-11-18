@@ -1,5 +1,6 @@
 import math
 from typing import Tuple, Optional
+from dataclasses import dataclass, field, asdict
 
 import torch
 from torch import nn
@@ -600,6 +601,21 @@ class ConformerLayer(torch.nn.Module):
 
         x = self.final_layer_norm(x)
         return x, self_attention
+
+
+@dataclass
+class ConformerEncoderConfig:
+    input_dim: int = 512
+    ffn_dim: int = 512
+    num_heads: int = 8
+    num_layers: int = 4
+    depthwise_conv_kernel_size: int = 31
+    dropout: float = 0.
+    use_group_norm: bool = False
+    convolution_first: bool = False
+    left_context: Optional[int] = 0
+    right_context: Optional[int] = 0
+    causal: bool = False
 
 
 class ConformerEncoder(nn.Module):

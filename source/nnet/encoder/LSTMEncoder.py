@@ -10,14 +10,28 @@ def _padding_mask_to_lengths(padding_mask: torch.Tensor) -> torch.Tensor:
     return padding_mask.size(1) - padding_mask.sum(dim=1)
 
 
+@dataclass
+class LSTMEncoderConfig:
+    input_dim: int = 40
+    hidden_dim: int = 64
+    num_layers: int = 3
+    dropout: float = 0.
+    projection_size: Optional[int] = 0
+    bias: bool = True
+    bidirectional: bool = False
+    batch_first: bool = True
+
+
 class LSTMEncoder(nn.Module):
+    """
+    LSTMEncoder class.
+    """
     def __init__(self, input_dim, hidden_dim, num_layers, dropout=0., projection_size=0, **kwargs):
         super().__init__()
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout,
                             proj_size=projection_size, **kwargs)
 
-    def forward(self, x, padding_mask, hidden=None, output_hidden: bool = False):
-        lengths = _padding_mask_to_lengths(padding_mask)
+    def forward(self, x, lengths, hidden=None, output_hidden: bool = False):
         # first pack the padded sequences
         x_packed = pack_padded_sequence(x, lengths.cpu(), batch_first=True, enforce_sorted=False)
         # lstm pass
@@ -32,7 +46,7 @@ class LSTMEncoder(nn.Module):
 
 class LSTMEncoder2(nn.Module):
     """
-    LSTMEncoder2 adds support for access to hidden states after each layer.
+    LSTMEncoder2 adds support for access to hidden states after each layer. Slower than LSTMEncoder.
     """
     def __init__(self, input_dim, hidden_dim, num_layers, dropout=0., projection_size=0, **kwargs):
         super().__init__()
@@ -45,10 +59,7 @@ class LSTMEncoder2(nn.Module):
         if dropout:
             self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x, lengths, hidden=None, output_hidden_states: bool = False, mask: Optional[torch.Tensor] = None):
-        # Mask input
-        if mask is not None:
-            x[mask] = 0.
+    def forward(self, x, lengths, hidden=None, output_hidden_states: bool = False):
         # first pack the padded sequences
         x_packed = pack_padded_sequence(x, lengths.cpu(), batch_first=True, enforce_sorted=False)
         # lstm pass

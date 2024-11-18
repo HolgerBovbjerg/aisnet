@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
@@ -145,8 +147,19 @@ class ComplexGaborFilter(nn.Module):
             x = x.reshape(batch_size, n_channels, x.size(1), x.size(2))
         return x
 
+@dataclass
+class GaborConfig:
+    num_filters: int = 40
+    n_coefficients: int = 401
+    sample_rate: int = 16000
+    min_frequency: float = 60.0
+    max_frequency: float = 7800.0
+    filter_init_method: str = "mel"
+    use_complex_convolution: bool = False
+    causal: bool = False
+    stride: int = 1
 
-class GaborLayer(nn.Module):
+class Gabor(nn.Module):
     """
     GaborLayer applies a bank of Gabor filters to the input waveform. These filters
     are initialized with frequencies spanning a range of interest (e.g., from 60 Hz to 7800 Hz)

@@ -8,13 +8,29 @@ import requests
 import tarfile
 
 import pandas as pd
-from omegaconf import OmegaConf
 from tqdm import tqdm
 from torchaudio.datasets import LIBRISPEECH
+
+from source.datasets.utils import check_database
 
 
 logger = getLogger(__name__)
 
+
+def create_symlink(source, destination):
+    if source == destination:
+        print(f"Source {source} is the same as destination {destination}. Symlink not created.")
+    else:
+        # Ensure target directory exists
+        Path(destination).mkdir(parents=True, exist_ok=True)
+
+        for entry in os.listdir(source):
+            source_path = os.path.join(source, entry)
+            destination_path = os.path.join(destination, entry)
+            try:
+                Path(source_path).symlink_to(destination_path)
+            except FileExistsError:
+                logger.info(f"Symlink for {destination_path} already exists.")
 
 def sync_directories(source, destination, options="-a --info=progress2"):
     """
@@ -62,11 +78,6 @@ def sync_directories(source, destination, options="-a --info=progress2"):
         print("Error during rsync:", e.stderr)
 
 
-# Example usage
-source_dir = "/path/to/source/"
-destination_dir = "/path/to/destination/"
-
-
 def get_dataset_path(datasets, name):
     path = datasets.get(name, None)
     if path is None:
@@ -76,13 +87,9 @@ def get_dataset_path(datasets, name):
 
 
 def download_librispeech_split(librispeech_root, split):
-    with open("data/database.yaml", "r") as f:
-        datasets = yaml.safe_load(f)
-
-    path = get_dataset_path(datasets, "LibriSpeech")
+    path = check_database("LibriSpeech")
     if path is None:
-        logger.error(f"Dataset '{split}' not found in database."
-                     f"Please update database.yaml")
+        raise ValueError("LibriSpeech not found in database.")
     elif path == "download":
         logger.info("Downloading LibriSpeech {}".format(split))
         try:
@@ -94,7 +101,7 @@ def download_librispeech_split(librispeech_root, split):
         logger.info(f"Copying LibriSpeech split '{split}' from '{path}' to '{librispeech_root}/{split}'")
         sync_directories(os.path.join(path, split), librispeech_root)
     else:
-        logger.error(f"Dataset found in database but the listed database path is not a directory.")
+        logger.error(f"Dataset found in database but the listed dataset path '{path}' is not a directory.")
 
 
 def download_file(url, dest):
@@ -132,14 +139,9 @@ def download_musan_data(base_dir='Musan'):
 
     # URLs for Musan dataset components
     urls = {'musan.tar.gz': 'https://www.openslr.org/resources/17/musan.tar.gz'}
-
-    with open("data/database.yaml", "r") as f:
-        datasets = yaml.safe_load(f)
-
-    path = get_dataset_path(datasets, "Musan")
+    path = check_database("Musan")
     if path is None:
-        logger.error(f"Dataset 'Musan' not found in database."
-                     f"Please update database.yaml")
+        raise ValueError("Musan not found in database.")
     elif path == "download":
         logger.info("Downloading Musan data")
         try:
@@ -154,7 +156,7 @@ def download_musan_data(base_dir='Musan'):
         logger.info(f"Copying Musan noise from '{path}' to '{base_dir}'")
         sync_directories(path, base_dir)
     else:
-        logger.error(f"Dataset found in database but the listed database path is not a directory.")
+        logger.error(f"Dataset found in database but the listed dataset path '{path}' is not a directory.")
 
 
 def create_speaker_mapping(librispeech_root_dir, split):
@@ -165,7 +167,7 @@ def create_speaker_mapping(librispeech_root_dir, split):
     split_dir = os.path.join(librispeech_root_dir, split)
 
     # Check if the split directory exists
-    if not os.path.isdir(split_dir):
+    if not (os.path.isdir(split_dir)):
         raise ValueError(f"The specified split directory does not exist: {split_dir}")
 
     # Iterate through the directories of the specified split
@@ -183,8 +185,10 @@ def create_speaker_mapping(librispeech_root_dir, split):
 
     return speaker_mapping
 
+
 def prepare_data(config):
     logger.info("Preparing data")
+
 
     train_data_config = config.data.train
     validation_data_config = config.data.validation
@@ -204,8 +208,6 @@ def prepare_data(config):
                                  columns=["Speaker ID", "Class Label"]).to_csv(output_file, index=False)
             else:
                 logger.error(f"Dataset {data_set} not supported")
-
-
 
     # Download noise data
     download_musan_data(base_dir=os.path.join(config.data_path, 'Musan'))

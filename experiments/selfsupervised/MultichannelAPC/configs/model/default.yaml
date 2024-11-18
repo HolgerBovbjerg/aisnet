@@ -1,4 +1,12 @@
-num_filters: 10
-encoder_embedding_dim: 10
+defaults:
+    - encoder: lstm
+    - feature_extractor: GCC
+
+input_dim: 33
+output_dim: 33
+n_channels: 2
+feature_projection: True
+feature_dropout: 0.1
+encoder_embedding_dim: 64
 sample_rate: 16000
-encoder_layers: 1
+

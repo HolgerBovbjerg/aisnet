@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Callable, Optional
 from io import BytesIO
+import os
 from operator import itemgetter
 import random
 
@@ -142,13 +143,13 @@ def pad_collate_clean_noisy(batch):
     clean_waveforms_padded = pad_sequence(waveforms, batch_first=True, padding_value=0).transpose(-1, -2)
     noisy_waveforms_padded = pad_sequence(noisy_waveforms, batch_first=True, padding_value=0).transpose(-1, -2)
 
-    return noisy_waveforms_padded, clean_waveforms_padded, lengths, head_direction, receiver_position
+    return clean_waveforms_padded, noisy_waveforms_padded, lengths, head_direction, receiver_position
 
 
 def build_binaural_datapipe(data_sets,
                             hrtf_folder,
                             sampling_rate: int = 16000,
-                            augmentor: Callable = None,
+                            augmentor: Optional[Callable] = None,
                             load_from_tar: bool = False,
                             buffer_size: int = 10000,
                             batch_size: int = 1,
@@ -162,8 +163,7 @@ def build_binaural_datapipe(data_sets,
     elif load_from == "raw":
         file_types = (".wav", '.flac')
     else:
-        file_types = None
-        assert ValueError(f"Loading_method: {load_from} not supported. "
+        raise ValueError(f"Loading_method: {load_from} not supported. "
                           "Supported methods are 'raw' and 'decoded'")
     # Create hrtf simulator
     hrtf_simulator = BinauralAudioSimulator(hrtf_folder=hrtf_folder, sampling_rate=sampling_rate)
@@ -173,9 +173,9 @@ def build_binaural_datapipe(data_sets,
     for data_set_name, info in data_sets.items():
         for split in info["splits"]:
             if load_from_tar:
-                datapipe = dp.iter.FileLister(info["root"] + split, "*.tar")
+                datapipe = dp.iter.FileLister(os.path.join(info["root"], split), "*.tar")
             else:
-                datapipe = dp.iter.FileLister(info["root"] + split, recursive=True,
+                datapipe = dp.iter.FileLister(os.path.join(info["root"], split), recursive=True,
                                               masks=[f"*{file_type}" for file_type in file_types])
             datapipes.append(datapipe)
 
@@ -206,11 +206,10 @@ def build_binaural_datapipe(data_sets,
         # Split if both clean and noisy version of the signal is needed
         if clean_and_noisy:
             def merge_fn(t1, t2):
-                return (t1[0], t2[0], t1[1], t1[2], t1[3], t1[4])
+                return t1[0], t2[0], t1[1], t1[2], t1[3], t1[4]
 
-            datapipe, datapipe_augmented = datapipe.fork(num_instances=2)
             datapipe = datapipe.map(partial(to_binaural, hrtf_simulator=hrtf_simulator))
-            datapipe_augmented = datapipe_augmented.map(partial(to_binaural, hrtf_simulator=hrtf_simulator))
+            datapipe, datapipe_augmented = datapipe.fork(num_instances=2)
             datapipe_augmented = datapipe_augmented.map(partial(augment, augmentor=augmentor))
             if segment_max_size:
                 datapipe = datapipe.flatmap(
@@ -255,7 +254,6 @@ def build_binaural_datapipe(data_sets,
                                                 buffer_size=100, min_len=min_length)
     else:
         datapipe = datapipe.batch(batch_size=batch_size, drop_last=True)
-    datapipe = datapipe.set_length(1)
     return datapipe
 
 
@@ -282,7 +280,6 @@ if __name__ == "__main__":
     noise_augmenter = AddBackgroundNoise(background_paths=noise_files_path, p=1.0,
                                          min_snr_in_db=10, max_snr_in_db=10,
                                          sample_rate=sampling_rate)
-    noise_augmenter = lambda x: x
 
 
     datapipe = build_binaural_datapipe(data_sets, hrtf_folder="/Users/JG96XG/Desktop/data_sets/HRTFs/RIEC_hrtf_all/",
@@ -298,6 +295,11 @@ if __name__ == "__main__":
         stereo = wavs[0].numpy().astype(np.float64)
         direction = cartesian_to_spherical(*head_direction[0])
         sd.play(stereo.T*0.1, 16000)
+        time.sleep(3.0)
+        sd.stop()
+        stereo = wavs_noisy[0].numpy().astype(np.float64)
+        direction = cartesian_to_spherical(*head_direction[0])
+        sd.play(stereo.T * 0.1, 16000)
         time.sleep(3.0)
         sd.stop()
 

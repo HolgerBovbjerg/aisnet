@@ -3,3 +3,12 @@ data_sets:
         root: ${data_path}/LibriSpeech
         splits:
             - dev-clean
+sampling_rate: 16000
+load_from_tar: False
+buffer_size: 10000
+max_token_count: 480000
+load_from: raw
+clean_and_noisy: True
+segment_max_size: null
+min_length: 8000
+hrtf_folder: "/Users/JG96XG/Desktop/data_sets/HRTFs/ARI/ari_splits/val/"

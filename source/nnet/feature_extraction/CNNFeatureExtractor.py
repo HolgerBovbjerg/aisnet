@@ -1,5 +1,6 @@
 from typing import Tuple, List
 from math import prod
+from dataclasses import dataclass
 
 import torch
 from torch import nn
@@ -71,6 +72,18 @@ def build_cnn_feature_extractor(
         cnn_blocks.append(nn.GELU())
 
     return nn.Sequential(*cnn_blocks)
+
+
+@dataclass
+class CNNFeatureExtractorConfig:
+    in_channels: Tuple[int, ...] = (1, 512, 512, 512, 512, 512, 512)
+    out_channels: Tuple[int, ...] = (512, 512, 512, 512, 512, 512, 512)
+    kernel_sizes: Tuple[int, ...] = (10, 3, 3, 3, 3, 2, 2)
+    strides: Tuple[int, ...] = (5, 3, 2, 2, 2, 2, 2)
+    stacked_consecutive_features: int = 1
+    stacked_features_stride: int = 1
+    causal: bool = True
+    sample_rate: int = 16000
 
 
 class CNNFeatureExtractor(nn.Module):

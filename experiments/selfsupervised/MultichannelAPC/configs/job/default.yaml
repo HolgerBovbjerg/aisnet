@@ -1,7 +1,9 @@
-exp_dir: ./runs
-exp_name: example_experiment
+exp_dir: ./runs/example
+exp_name: multichannel_apc
 log_interval: 10
-validation_interval: null
+validation_interval: 10000
 pin_memory: False
 num_workers: 4
-device: cpu
+device:
+    name: cpu
+    backend: null

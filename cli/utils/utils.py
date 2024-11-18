@@ -13,6 +13,4 @@ def load_experiment_run(experiment_type):
     except ModuleNotFoundError as e:
         error_message = f"Module import error. Error: {str(e)}"
         logger.error(error_message)
-        raise ModuleNotFoundError(error_message)
-
-
+        raise ModuleNotFoundError(error_message) from e

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from math import ceil
 from dataclasses import dataclass
 
@@ -6,9 +6,26 @@ import torch
 import torch.nn as nn
 
 from .STFT import STFT
+from .GCC import apply_phase_transform
 
 
-class SRPPHAT(nn.Module):
+@dataclass
+class SRPConfig:
+    microphone_positions: torch.Tensor
+    n_fft: int = 512
+    window_length: int = 400
+    hop_length: int = 160
+    sample_rate: int = 16000
+    center: bool = False
+    window_type: str = 'hann'
+    elevation_resolution: float = 5.
+    azimuth_resolution: float = 5.
+    elevation_range: Tuple[float, float] = (0., 180.)
+    azimuth_range: Tuple[float, float] = (-180., 180.)
+    c_sound: float = 343.
+    frequency_range: Optional[Tuple[float, float]] = None
+
+class SRP(nn.Module):
     def __init__(self, microphone_positions: torch.Tensor, n_fft: int = 512, window_length: int = 400,
                  hop_length: int = 160, sample_rate: int = 16000,
                  center: bool = False, window_type: str = 'hann',
@@ -16,7 +33,8 @@ class SRPPHAT(nn.Module):
                  elevation_range: Tuple[float, float] = (0., 180.),
                  azimuth_range: Tuple[float, float] = (-180., 180.),
                  c_sound: float = 343.,
-                 frequency_range: Tuple[float, float] = None):
+                 frequency_range: Optional[Tuple[float, float]] = None,
+                 phase_transform: bool = True):
         super().__init__()
         self.sample_rate = sample_rate
         self.hop_length = hop_length
@@ -49,6 +67,8 @@ class SRPPHAT(nn.Module):
         self.steering_vector_to_angle_map = self.get_steering_vector_index_to_angle_mapping()
         self.time_delays = self.compute_inter_microphone_time_delays()
         self.phase_shifts = self.compute_phase_shifts()
+        self.phase_transform = phase_transform
+        self.apply_phase_transform = apply_phase_transform if phase_transform else lambda x: x
 
     def compute_steering_vectors(self):
         # Compute elevation and azimuth angles
@@ -122,11 +142,8 @@ class SRPPHAT(nn.Module):
         # Compute the cross-power spectra (CPS) for each pair of microphones
         cps = stft_j * stft_i.conj()  # (batch, num_pairs, time, stft_bins)
 
-        # Compute the magnitude of the cross power spectrum
-        magnitude = torch.abs(cps)
-
-        # Phase transform
-        cps = cps / (magnitude + 1.e-8)
+        # Phase transform (no-op if self.phase_transform is False)
+        cps = self.apply_phase_transform(cps)
 
         # Naive SRP
         # DC_offset = stft.size(1) * stft.size(2)
@@ -203,7 +220,7 @@ if __name__ == '__main__':
     # Sample rate and maximum delay in seconds
     sample_rate = 48000
 
-    speech_signal, fs = torchaudio.load('/Users/JG96XG/PycharmProjects/BinauralSSL/data/OSR_us_000_0010_8k.wav')
+    speech_signal, fs = torchaudio.load('/Users/JG96XG/PycharmProjects/aisnet/data/OSR_us_000_0010_8k.wav')
     if fs != sample_rate:
         speech_signal = torchaudio.functional.resample(speech_signal, fs, sample_rate)
     speech_signal = torch.randn_like(speech_signal)
@@ -236,10 +253,10 @@ if __name__ == '__main__':
     elevation_range = (50., 140.)
     azimuth_range = (-90., 90.)
     frequency_range = (500., 4000.)
-    srp_phat = SRPPHAT(microphone_positions=microphone_positions, n_fft=512, window_length=401, hop_length=160,
-                       sample_rate=sample_rate, center=True,
-                       c_sound=c_sound, elevation_range=elevation_range, azimuth_range=azimuth_range,
-                       frequency_range=frequency_range)
+    srp_phat = SRP(microphone_positions=microphone_positions, n_fft=512, window_length=401, hop_length=160,
+                   sample_rate=sample_rate, center=True,
+                   c_sound=c_sound, elevation_range=elevation_range, azimuth_range=azimuth_range,
+                   frequency_range=frequency_range)
 
     # Compute SRP-PHAT map
     srp_map = srp_phat(input_tensor)

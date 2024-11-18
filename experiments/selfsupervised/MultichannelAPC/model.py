@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from logging import getLogger
 
 from omegaconf import OmegaConf
@@ -7,7 +7,10 @@ from torch import nn
 
 
 from source.utils import count_parameters
-from source.nnet import STFT
+from source.nnet.feature_extraction import build_extractor, FeatureExtractorConfig
+from source.nnet.encoder import build_encoder, EncoderConfig
+from source.models.selfsupervised.MultichannelAPC import MultichannelAPC
+from source.nnet.utils.padding import lengths_to_padding_mask
 
 
 logger = getLogger(__name__)
@@ -15,10 +18,15 @@ logger = getLogger(__name__)
 
 @dataclass
 class ModelConfig:
-    num_filters: int = 10
-    encoder_embedding_dim: int = 10
+    input_dim: int = 40
+    output_dim: int = 40
+    feature_projection: bool = True
+    feature_dropout: float = 0.
+    encoder_embedding_dim: int = 512
+    feature_extractor: FeatureExtractorConfig = field(default_factory=FeatureExtractorConfig)
+    encoder: EncoderConfig = field(default_factory=EncoderConfig)
     sample_rate: int = 16000
-    encoder_layers: int = 1
+    n_channels: int = 2
 
 
 class Model(nn.Module):
@@ -27,21 +35,23 @@ class Model(nn.Module):
     """
 
     def __init__(self,
-                 cfg: ModelConfig = None):
+                 cfg: ModelConfig = ModelConfig()):
         super().__init__()
-        #self.leaf = LEAF(num_filters=cfg.num_filters, sample_rate=cfg.sample_rate)
-        self.stft = STFT(n_fft=cfg.num_filters*2-1, window_length=400, hop_length=400, sample_rate=cfg.sample_rate)
-        self.encoder = nn.LSTM(input_size=cfg.num_filters,
-                               hidden_size=cfg.encoder_embedding_dim,
-                               num_layers=cfg.encoder_layers,
-                               batch_first=True)
-        self.linear = nn.Linear(cfg.encoder_embedding_dim, 40)
+        self.feature_projection = nn.Linear(cfg.input_dim, cfg.encoder_embedding_dim) if cfg.feature_projection \
+            else nn.Identity()
+        self.feature_extractor = build_extractor(cfg.feature_extractor)
+        self.encoder =  build_encoder(cfg.encoder)
+        self.model = MultichannelAPC(input_dim=cfg.input_dim,
+                                     feature_extractor=self.feature_extractor,
+                                     feature_dropout=cfg.feature_dropout,
+                                     feature_projection=self.feature_projection,
+                                     encoder=self.encoder,
+                                     encoder_embedding_dim=cfg.encoder_embedding_dim,
+                                     n_channels=cfg.n_channels)
 
-    def forward(self, x, lengths=None):
-        x = torch.log10(self.stft(x).abs() ** 2 + 1.e-9).squeeze()
-        x, _ = self.encoder(x)
-        x = self.linear(x[:, -1, :])
-        return x
+    def forward(self, x, lengths, target):
+        prediction, target, lengths = self.model(x, lengths=lengths, target=target)
+        return prediction, target, lengths
 
 
 def build_model(config):

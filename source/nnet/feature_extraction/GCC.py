@@ -1,4 +1,5 @@
-from typing import List
+from dataclasses import dataclass
+from typing import List, Optional
 
 import torch
 import torch.nn as nn
@@ -36,16 +37,37 @@ def add_noise_to_waveform(waveforms: torch.Tensor, snr_db: float) -> torch.Tenso
     return noisy_waveforms
 
 
+def apply_phase_transform(cps: torch.Tensor) -> torch.Tensor:
+    # Compute the magnitude of the cross power spectrum
+    magnitude = torch.abs(cps)
+
+    # Phase transform
+    return cps / (magnitude + 1.e-8)
+
+
 def estimate_doa(tdoa: torch.Tensor, dist_mics: float, c_sound: float = 343.):
     dist_wave = c_sound * tdoa
     dist_wave[dist_wave >= dist_mics] = dist_mics - 1.e-7
     dist_wave[dist_wave <= -dist_mics] = -dist_mics + 1.e-7
     return torch.arcsin(dist_wave / dist_mics) * (180. / torch.pi)
 
+@dataclass
+class GCCConfig:
+    n_fft: int = 512
+    window_length: int = 400
+    hop_length: int = 160
+    sample_rate: int = 16000
+    center: bool = False
+    window_type: str = "hann"
+    max_delay: Optional[torch.Tensor] = None
+    n_mics: int = 2
+    phase_transform: bool = True
 
-class GCCPHAT(nn.Module):
+
+class GCC(nn.Module):
     def __init__(self, n_fft: int, window_length: int, hop_length: int, sample_rate: int, center: bool = False,
-                 window_type: str = "hann", max_delay: torch.Tensor = None, n_mics: int = 2):
+                 window_type: str = "hann", max_delay: Optional[torch.Tensor] = None, n_mics: int = 2,
+                 phase_transform: bool = True):
         super().__init__()
         self.sample_rate = sample_rate
         self.hop_length = hop_length
@@ -56,12 +78,14 @@ class GCCPHAT(nn.Module):
         self.stft = STFT(n_fft=n_fft, hop_length=hop_length, window_length=window_length, sample_rate=sample_rate,
                          center=center, window_type=window_type)
         self.max_delay = max_delay if max_delay is not None else [n_fft // 2 + 1]
-        self.delays = [torch.arange(-delay, delay + 1, dtype=torch.int) for delay in self.max_delay] if max_delay is not None else None
+        self.delays = [torch.arange(-delay, delay + 1, dtype=torch.int) for delay in self.max_delay]
         self.n_mics = n_mics
         self.mic_indices_i, self.mic_indices_j = torch.triu_indices(self.n_mics, self.n_mics, offset=1)
         self.mic_pairs = tuple((int(i), int(j)) for i, j in zip(self.mic_indices_i, self.mic_indices_j))
+        self.phase_transform = phase_transform
+        self.apply_phase_transform = apply_phase_transform if phase_transform else lambda x: x
 
-    def forward(self, input_tensor: torch.Tensor):
+    def forward(self, input_tensor: torch.Tensor, output_delay: bool = False, output_tdoa: bool = False):
         # Expecting input_tensor shape: (batch, channels, time)
         stft = self.stft(input_tensor)
 
@@ -69,22 +93,26 @@ class GCCPHAT(nn.Module):
         stft_i = stft[:, self.mic_indices_i]  # (batch, num_pairs, time, stft_bins)
         stft_j = stft[:, self.mic_indices_j]  # (batch, num_pairs, time, stft_bins)
 
-        # Compute the cross-power spectra (CPS) for each pair of microphones
+        # Compute the cross-power spectrum(CPS) for each pair of microphones
         cps = stft_j * stft_i.conj()  # (batch, num_pairs, time, stft_bins)
 
-        # Compute the magnitude of the cross power spectrum
-        magnitude = torch.abs(cps)
+        # Phase transform (no-op if self.phase_transform is False)
+        cps = self.apply_phase_transform(cps)
 
-        # Phase transform
-        cps = cps / (magnitude + 1.e-8)
-
-        # Inverse fft to go to time domain
-        r = torch.fft.irfft(cps, dim=-1, n=self.n_fft)
+        # Inverse fft of CPS to go to time domain
+        r = torch.fft.irfft(cps, dim=-1, n=self.n_fft).transpose(-1, -2)
 
         # max delay for each microphone pair is provided
         output = []
         for i, delay_range in enumerate(self.delays):
-            output.append(r[:, i, :, delay_range])
+            output.append(r[:, i, delay_range])
+        if output_delay:
+            if output_tdoa:
+                output = [self.estimate_tdoa(x) for x in output]
+            else:
+                output = [self.estimate_delay(x) for x in output]
+        if len(output) == 1:
+            return output[0]
         return output
 
     def estimate_delay(self, r: List[torch.Tensor]):
@@ -109,7 +137,7 @@ if __name__ == "__main__":
     # Sample rate and maximum delay in seconds
     sample_rate = 16000
 
-    speech_signal, fs = torchaudio.load('/Users/JG96XG/PycharmProjects/BinauralSSL/data/OSR_us_000_0010_8k.wav')
+    speech_signal, fs = torchaudio.load('/Users/JG96XG/PycharmProjects/aisnet/data/OSR_us_000_0010_8k.wav')
     if fs != sample_rate:
         speech_signal = torchaudio.functional.resample(speech_signal, fs, sample_rate)
 
@@ -170,4 +198,4 @@ if __name__ == "__main__":
 
     fig.suptitle("GCC-PHAT estimation")
     fig.show()
-    print(f"Done")
+    print("Done")

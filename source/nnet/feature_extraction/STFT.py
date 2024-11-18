@@ -1,11 +1,24 @@
+from dataclasses import dataclass
+
 import torch
 from torch import nn
 from torch.nn import functional as F
 
 
+@dataclass
+class STFTConfig:
+    n_fft: int = 512
+    window_length: int = 400
+    hop_length: int = 160
+    sample_rate: int = 16000
+    center: bool = True
+    window_type: str = "hann"
+    pad_mode: str = "reflect"
+
+
 class STFT(nn.Module):
-    def __init__(self, n_fft: int, window_length: int, hop_length: int, sample_rate: int, center: bool = False,
-                 window_type: str = "hann", pad_mode: str = "constant"):
+    def __init__(self, n_fft: int, window_length: int, hop_length: int, sample_rate: int, center: bool = True,
+                 window_type: str = "hann", pad_mode: str = "reflect"):
         super().__init__()
         self.sample_rate = sample_rate
         self.hop_length = hop_length

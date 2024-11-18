@@ -13,9 +13,9 @@ from xlstm.blocks.mlstm.layer import mLSTMLayer
 from xlstm.components.feedforward import create_feedforward
 import xlstm.components.ln as ln
 
-from common.modules import EMA
-from common.feature_extraction import CNNFeatureExtractor, LogMelFeatureExtractor
-from models.Conformer import ConformerLayer
+from source.nnet.modules import EMA
+from source.nnet.feature_extraction import CNNFeatureExtractor, LogMel
+from source.nnet.encoder.ConformerEncoder import ConformerLayer
 
 
 def _lengths_to_padding_mask(lengths: torch.Tensor) -> torch.Tensor:

@@ -1,8 +1,10 @@
+from dataclasses import dataclass
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .Gabor import GaborLayer
+from .Gabor import Gabor
 
 
 class GaussianLowPass(nn.Module):
@@ -127,6 +129,22 @@ class sPCENLayer(nn.Module):
         return output
 
 
+@dataclass
+class LEAFConfig:
+    num_filters: int = 40
+    n_coefficients: int = 401
+    sample_rate: int = 16000,
+    compression_factor: float = 0.96
+    window_length: int = 401
+    hop_length: int = 160,
+    min_frequency: float = 60.0
+    max_frequency: float = 7800.0
+    filter_init_method: str = "mel"
+    use_complex_convolution = True
+    causal: bool = True
+    compression: str = "sPCEN"
+
+
 class LEAF(nn.Module):
     """
     LEAFFrontend implements the LEAF (Learnable Frontend for Audio) model,
@@ -146,10 +164,10 @@ class LEAF(nn.Module):
                  use_complex_convolution=True, causal: bool = True, compression: str = "sPCEN"):
         super().__init__()
         self.use_complex_convolution = use_complex_convolution
-        self.gabor_layer = GaborLayer(num_filters=num_filters, n_coefficients=n_coefficients, sample_rate=sample_rate,
-                                      min_frequency=min_frequency, max_frequency=max_frequency,
-                                      filter_init_method=filter_init_method,
-                                      use_complex_convolution=use_complex_convolution, causal=causal)
+        self.gabor_layer = Gabor(num_filters=num_filters, n_coefficients=n_coefficients, sample_rate=sample_rate,
+                                 min_frequency=min_frequency, max_frequency=max_frequency,
+                                 filter_init_method=filter_init_method,
+                                 use_complex_convolution=use_complex_convolution, causal=causal)
         self.pooling_layer = GaussianLowPass(in_channels=num_filters, kernel_size=window_length, stride=hop_length,
                                              causal=causal)
         if compression == "log":

@@ -1,0 +1,5 @@
+name: "lstm"
+config:
+    input_dim: 64 # ${eval:'${model.n_channels} * 64'}
+    hidden_dim: ${model.encoder_embedding_dim}
+    num_layers: 2

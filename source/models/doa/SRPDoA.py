@@ -2,7 +2,7 @@ from typing import Tuple
 import torch
 from torch import nn
 
-from source.nnet.feature_extraction import SRPPHAT
+from source.nnet.feature_extraction import SRP
 
 
 class SRPPHATDoA(nn.Module):
@@ -16,11 +16,11 @@ class SRPPHATDoA(nn.Module):
         self.microphone_positions = microphone_positions
         self.n_mics = microphone_positions.size(0)
         self.c_sound = c_sound
-        self.srp = SRPPHAT(microphone_positions=microphone_positions, n_fft=n_fft, window_length=window_length,
-                           hop_length=hop_length, sample_rate=sample_rate,
-                           center=center, c_sound=c_sound, window_type=window_type, elevation_range=elevation_range,
-                           azimuth_range=azimuth_range, elevation_resolution=elevation_resolution,
-                           azimuth_resolution=azimuth_resolution, frequency_range=frequency_range)
+        self.srp = SRP(microphone_positions=microphone_positions, n_fft=n_fft, window_length=window_length,
+                       hop_length=hop_length, sample_rate=sample_rate,
+                       center=center, c_sound=c_sound, window_type=window_type, elevation_range=elevation_range,
+                       azimuth_range=azimuth_range, elevation_resolution=elevation_resolution,
+                       azimuth_resolution=azimuth_resolution, frequency_range=frequency_range)
 
     def forward(self, x):
         doa = self.srp.estimate_doa(x)

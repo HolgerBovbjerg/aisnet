@@ -1,51 +1,82 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Tuple
 
 from torch import nn
-from xlstm.blocks.slstm.layer import sLSTMLayer
-from xlstm.blocks.mlstm.layer import mLSTMLayer
-from xlstm.components.feedforward import create_feedforward
-import xlstm.components.ln as ln
+from xlstm import (
+    xLSTMBlockStack,
+    xLSTMBlockStackConfig,
+    mLSTMBlockConfig,
+    mLSTMLayerConfig,
+    sLSTMBlockConfig,
+    sLSTMLayerConfig,
+    FeedForwardConfig,
+)
+
+
+@dataclass
+class mLSTMConfig:
+    conv1d_kernel_size: int = 4
+    qkv_proj_blocksize: int = 4
+    num_heads: int = 4
+
+@dataclass
+class sLSTMConfig:
+    backend: str = "cuda"
+    num_heads: int = 4
+    conv1d_kernel_size: int = 4
+    bias_init: str = "powerlaw_blockdependent"
+
+@dataclass
+class sLSTMFeedForwardConfig:
+    proj_factor: float = 1.3
+    act_fn: str = "gelu"
+
+@dataclass
+class xLSTMEncoderConfig:
+    input_dim: int = 40
+    embedding_dim: int = 256
+    slstm_config = sLSTMConfig
+    mlstm_config = mLSTMConfig
+    slstm_feedforward_config = sLSTMFeedForwardConfig
+    context_length: int = 256
+    num_blocks: int = 7
+    slstm_at: Tuple[int] = (1,)
+
+    def __post_init__(self):
+        self.slstm_config = sLSTMConfig(**self.slstm_config)
+        self.mlstm_config = mLSTMConfig(**self.mlstm_config)
+        self.slstm_feedforward_config = sLSTMFeedForwardConfig
 
 
 class xLSTMEncoder(nn.Module):
-    def __init__(self, layers, sLSTM_config=None, mLSTM_config=None, ffn_config=None):
+    def __init__(self, input_dim: int = 40, embedding_dim: int = 256, slstm_config = sLSTMConfig(),
+                 mlstm_config = mLSTMConfig(), slstm_feedforward_config=sLSTMFeedForwardConfig(),
+                 context_length: int = 256, num_blocks: int = 7, slstm_at: Tuple[int] = (1,)):
         super().__init__()
-        self.layers = layers
-        embedding_dim = (mLSTM_config.embedding_dim if mLSTM_config is not None else sLSTM_config.embedding_dim)
-        self.xlstm_norm = nn.ModuleList()
-        self.xlstm_blocks = nn.ModuleList()
-        self.ffn_norm = nn.ModuleList()
-        self.ffn = nn.ModuleList()
-        if sLSTM_config is not None:
-            sLSTM_config.__post_init__()
-        if mLSTM_config is not None:
-            mLSTM_config.__post_init__()
-        if ffn_config is not None:
-            ffn_config.__post_init__()
-        for i, _ in enumerate(layers):
-            self.xlstm_norm.append(ln.LayerNorm(ndim=embedding_dim, weight=True, bias=False))
-            if layers[i] == 's':
-                self.xlstm_blocks.append(sLSTMLayer(sLSTM_config))
-            else:
-                self.xlstm_blocks.append(mLSTMLayer(mLSTM_config))
-            self.ffn_norm.append(ln.LayerNorm(ndim=embedding_dim, weight=True, bias=False))
-            self.ffn.append(create_feedforward(ffn_config))
-        self.post_blocks_norm = ln.LayerNorm(ndim=embedding_dim)
-        self.reset_parameters()
+        self.input_projection = nn.Linear(input_dim, embedding_dim)
+        cfg = xLSTMBlockStackConfig(
+            mlstm_block=mLSTMBlockConfig(
+                mlstm=mLSTMLayerConfig(
+                    **asdict(mlstm_config)
+                )
+            ),
+            slstm_block=sLSTMBlockConfig(
+                slstm=sLSTMLayerConfig(
+                    **asdict(slstm_config)
+                ),
+                feedforward=FeedForwardConfig(**asdict(slstm_feedforward_config)),
+            ),
+            context_length=context_length,
+            num_blocks=num_blocks,
+            embedding_dim=embedding_dim,
+            slstm_at=list(slstm_at),
+        )
+        self.encoder = xLSTMBlockStack(cfg)
 
-    def forward(self, x, hidden):
-        if hidden is None:
-            hidden = {}
-        for block_idx, block in enumerate(self.xlstm_blocks):
-            if self.layers[block_idx] == 's':
-                x, hidden[f'block_{block_idx}'] = block(self.xlstm_norm[block_idx](x),
-                                                        hidden.get(f'block_{block_idx}', None), return_last_state=True)
-            else:
-                x = block(self.xlstm_norm[block_idx](x))
-            x = x + self.ffn[block_idx](self.ffn_norm[block_idx](x))
-        x = self.post_blocks_norm(x)
-        return x, hidden
+    def forward(self, x, padding_mask, hidden=None, output_hidden_states: bool = False):
+        x = self.input_projection(x)
+        x = self.encoder(x)
+        return x
 
     def reset_parameters(self):
         for i in range(len(self.layers)):

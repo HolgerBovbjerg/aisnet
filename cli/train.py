@@ -10,6 +10,9 @@ from cli.utils import load_experiment_run
 # Setting up the logger in the main script
 logger = logging.getLogger(__name__)
 
+# Setup support for eval resolver for configs
+OmegaConf.register_new_resolver("eval", eval)
+
 
 @hydra.main(config_path="../experiments/example/configs", config_name="config", version_base=None)
 def main(config: OmegaConf) -> None:

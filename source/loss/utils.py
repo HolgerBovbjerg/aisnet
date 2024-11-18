@@ -5,7 +5,7 @@ from .weighted_pairwise import WeightedPairwiseLoss
 from .vicreg_loss import VICRegLoss
 
 
-def get_loss(name: str, ignore_index=-1, **kwargs):
+def get_loss(name: str, **kwargs):
     loss_classes = {
         "weighted_pairwise": WeightedPairwiseLoss,
         "cross_entropy": nn.CrossEntropyLoss,
@@ -16,7 +16,7 @@ def get_loss(name: str, ignore_index=-1, **kwargs):
     }
 
     if name in loss_classes:
-        return loss_classes[name](**kwargs, ignore_index=ignore_index) if name != "cross_entropy" else loss_classes[name](ignore_index=ignore_index)
+        return loss_classes[name](**kwargs)
 
     raise ValueError(f"Loss with name: {name}, not supported.")
 

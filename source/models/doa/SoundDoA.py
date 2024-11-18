@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from source.nnet.feature_extraction import GaborLayer
+from source.nnet.feature_extraction import Gabor
 
 
 class SoundDoA(nn.Module):
@@ -19,9 +19,9 @@ class SoundDoA(nn.Module):
         self.mic_indices_i, self.mic_indices_j = torch.triu_indices(self.n_mics, self.n_mics, offset=1)
         self.mic_pairs = tuple((int(i), int(j)) for i, j in zip(self.mic_indices_i, self.mic_indices_j))
 
-        self.gabor = GaborLayer(num_filters=num_filters, n_coefficients=window_length, sample_rate=sample_rate,
-                                causal=causal, use_complex_convolution=use_complex_convolution,
-                                stride=hop_length)
+        self.gabor = Gabor(num_filters=num_filters, n_coefficients=window_length, sample_rate=sample_rate,
+                           causal=causal, use_complex_convolution=use_complex_convolution,
+                           stride=hop_length)
         self.formant_enhancer = nn.Conv2d(num_filters, num_filters, kernel_size=(3, 1),
                                           padding="same")
         self.detail_enhancer = nn.Conv2d(num_filters, num_filters, kernel_size=(3, 1),

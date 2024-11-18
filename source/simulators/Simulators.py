@@ -106,17 +106,25 @@ class BinauralAudioSimulator:
         if sampling_rate != self.sampling_rate:
             signal = resample(signal, self.sampling_rate, sampling_rate).float()
 
-        left_ear = torch.nn.functional.conv1d(signal,
-                                              torch.flip(torch.from_numpy(hrtf_left).float(),
-                                                         dims=[-1]).view(1, 1, -1), padding="same")
-        right_ear = torch.nn.functional.conv1d(signal,
-                                               torch.flip(torch.from_numpy(hrtf_right).float(),
-                                                          dims=[-1]).view(1, 1, -1), padding="same")
+        hrtf_left = torch.from_numpy(hrtf_left).float().view(1, 1, -1)
+        hrtf_right = torch.from_numpy(hrtf_right).float().view(1, 1, -1)
+
+        normalization_factor = torch.max(torch.max(torch.abs(hrtf_left)), torch.max(torch.abs(hrtf_right)))
+
+        hrtf_left = hrtf_left / (normalization_factor + 1.e-9)
+        hrtf_right = hrtf_right / (normalization_factor + 1.e-9)
+
+        right = torchaudio.functional.fftconvolve(signal, hrtf_right, mode='full')
+        left = torchaudio.functional.fftconvolve(signal, hrtf_left, mode='full')
 
         if sampling_rate != self.sampling_rate:
-            left_ear = resample(left_ear, sampling_rate, self.sampling_rate).float()
-            right_ear = resample(right_ear, sampling_rate, self.sampling_rate).float()
-        return left_ear, right_ear, receiver_coordinates
+            left = resample(left, sampling_rate, self.sampling_rate).float()
+            right = resample(right, sampling_rate, self.sampling_rate).float()
+        if torch.isnan(left).any():
+            print("clean input Tensor contains NaN values")
+        if torch.isnan(right).any():
+            print("clean input Tensor contains NaN values")
+        return left, right, receiver_coordinates
 
     def __call__(self, signal, source_direction):
         return self.apply_hrtf(signal, source_direction)
@@ -151,7 +159,7 @@ if __name__ == '__main__':
 
     # 1. Load the speech signal
     speech_signal, fs = torchaudio.load(
-        '/Users/JG96XG/PycharmProjects/BinauralSSL/data/OSR_us_000_0010_8k.wav')
+        '/Users/JG96XG/PycharmProjects/aisnet/data/OSR_us_000_0010_8k.wav')
 
     if fs != sampling_rate:
         speech_signal = resample(speech_signal, fs, sampling_rate)
@@ -186,7 +194,7 @@ if __name__ == '__main__':
     sd.stop()
 
     # 5. Apply the HRTF to generate the final binaural audio
-    head_direction = (1., 90, 45)  # Right, horizontal plane
+    head_direction = (1., -90, 45)  # Right, horizontal plane
     head_direction = spherical_to_cartesian(*head_direction)
 
     hrtf_simulator = BinauralAudioSimulator(hrtf_folder=hrtf_folder,
@@ -195,7 +203,7 @@ if __name__ == '__main__':
                                                                   source_direction=head_direction)
 
     stereo = torch.cat((left_signal, right_signal), dim=1)
-    stereo = stereo / (stereo.max() + 1.e-9)
+    #stereo = stereo / (stereo.max() + 1.e-9)
     duration = 5.0
     sd.play(stereo[0].T, sampling_rate)
     time.sleep(duration)
