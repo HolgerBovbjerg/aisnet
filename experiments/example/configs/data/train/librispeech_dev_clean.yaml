@@ -1,5 +1,0 @@
-data_sets:
-    LibriSpeech:
-        root: ${data_path}/LibriSpeech
-        splits:
-            - dev-clean
