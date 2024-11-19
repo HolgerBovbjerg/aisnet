@@ -208,10 +208,23 @@ def prepare_data(config):
                 splits = data_set_config.splits
                 for split in splits:
                     download_librispeech_split(root, split)
-                    speaker_map = create_speaker_mapping(root, split)
+            else:
+                logger.error(f"Dataset {data_set} not supported")
+    # Create speaker mappings
+    for data_config in [train_data_config, validation_data_config, test_data_config]:
+        for data_set, data_set_config in data_config["data_sets"].items():
+            if data_set == "LibriSpeech":
+                root = data_set_config.root
+                splits = data_set_config.splits
+                for split in splits:
                     output_file = os.path.join(root, split, "speaker_mapping.csv")
-                    pd.DataFrame(list(speaker_map.items()),
-                                 columns=["Speaker ID", "Class Label"]).to_csv(output_file, index=False)
+                    if Path(str(output_file)).is_file():
+                        logger.info(f"Skipping {split} speaker mapping as it already exists.")
+                    else:
+                        speaker_map = create_speaker_mapping(root, split)
+                        pd.DataFrame(list(speaker_map.items()),
+                                     columns=["Speaker ID", "Class Label"]).to_csv(output_file, index=False)
+                        logger.info(f"Created {split} speaker mapping at {output_file}.")
             else:
                 logger.error(f"Dataset {data_set} not supported")
 
