@@ -1,5 +1,3 @@
-import os
-
 from torch import nn
 
 
@@ -45,4 +43,98 @@ def count_parameters(model, trainable: bool = False) -> int:
     return count
 
 
+def format_num(num):
+    """Format a number with commas and round to 2 decimals if needed."""
+    if num > 1e6:
+        return f"{num / 1e6:.2f} M"
+    elif num > 1e3:
+        return f"{num / 1e3:.2f} K"
+    return str(num)
 
+def get_layer_info(layer):
+    """
+    Get detailed information about a PyTorch layer, including its parameters.
+
+    Args:
+        layer (nn.Module): A PyTorch layer.
+
+    Returns:
+        str: A string describing the layer's configuration.
+    """
+    if isinstance(layer, nn.LSTM) or isinstance(layer, nn.GRU):
+        return (
+            f"({layer.__class__.__name__}, input_dim={layer.input_size}, "
+            f"hidden_dim={layer.hidden_size}, layers={layer.num_layers}, "
+            f"bidirectional={layer.bidirectional})"
+        )
+    elif isinstance(layer, nn.Linear):
+        return f"({layer.__class__.__name__}, in_features={layer.in_features}, out_features={layer.out_features})"
+    elif isinstance(layer, nn.Conv2d):
+        return (
+            f"({layer.__class__.__name__}, in_channels={layer.in_channels}, "
+            f"out_channels={layer.out_channels}, kernel_size={layer.kernel_size}, "
+            f"stride={layer.stride}, padding={layer.padding})"
+        )
+    elif isinstance(layer, nn.Conv1d):
+        return (
+            f"({layer.__class__.__name__}, in_channels={layer.in_channels}, "
+            f"out_channels={layer.out_channels}, kernel_size={layer.kernel_size}, "
+            f"stride={layer.stride}, padding={layer.padding})"
+        )
+    elif isinstance(layer, nn.Embedding):
+        return f"({layer.__class__.__name__}, num_embeddings={layer.num_embeddings}, embedding_dim={layer.embedding_dim})"
+    else:
+        return f"({layer.__class__.__name__})"
+
+
+def print_module_structure(module, indent=0):
+    """
+    Prints the structure of a PyTorch module with layer sizes.
+
+    Args:
+        module (nn.Module): The module to analyze.
+        indent (int): Current indentation level for nested submodules.
+    """
+    indent_space = "  " * indent
+    module_info = get_layer_info(module)
+    print(f"{indent_space}{module.__class__.__name__}{module_info}:")
+
+    for name, child in module.named_children():
+        print(f"{indent_space}  ({name}):")
+        print_module_structure(child, indent + 2)
+
+    # If no children, display this module's parameters if available
+    if len(list(module.named_children())) == 0:
+        params = list(module.parameters())
+        if params:
+            param_shapes = [tuple(p.size()) for p in params]
+            print(f"{indent_space}  Parameters: {param_shapes}")
+
+
+def summarize_model(module):
+    """
+    Summarizes a PyTorch model with details about parameters and size.
+
+    Args:
+        module (nn.Module): The module to summarize.
+
+    Returns:
+        None
+    """
+    total_params = count_parameters(module)
+    trainable_params = count_parameters(module, trainable=True)
+    param_size = compute_model_size(module)
+
+    for param in module.parameters():
+        num_params = param.numel()
+        total_params += num_params
+        param_size += num_params * param.element_size()
+        if param.requires_grad:
+            trainable_params += num_params
+
+    print("\nModel summary:")
+    print(f"    Class Name: {module.__class__.__name__}")
+    print(f"    Total Number of model parameters: {format_num(total_params)}")
+    print(f"    Number of trainable parameters: {format_num(trainable_params)} ({(trainable_params / total_params) * 100:.1f}%)")
+    print(f"    Size: {param_size / (1024 ** 2):.1f} MB")
+    print(f"    Type: {next(module.parameters()).dtype}")
