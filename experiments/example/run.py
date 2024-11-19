@@ -8,10 +8,12 @@ from torch.distributed import init_process_group, destroy_process_group
 import torch.multiprocessing as mp
 
 from source.utils import seed_everything
+from source.models.utils import summarize_model, print_module_structure
 from .data_preparation import prepare_data
 from .data_loading import setup_dataloader
 from .model import build_model
 from .trainer import setup_trainer
+
 
 logger = getLogger(__name__)
 
@@ -44,6 +46,10 @@ def model_training(config, distributed: bool = False):
     train_loader, val_loader, label_mapping = setup_dataloader(config, distributed=distributed)
     logger.info("Building model.")
     model = build_model(config)
+    logger.info("Built model:")
+    print_module_structure(model)
+    summarize_model(model)
+
     logger.info("Setting up trainer.")
     trainer = setup_trainer(config, model, train_loader, val_loader, label_mapping, distributed=distributed)
     logger.info("Starting training.")

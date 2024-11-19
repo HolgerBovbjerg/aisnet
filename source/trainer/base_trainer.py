@@ -113,6 +113,7 @@ class BaseTrainer:
 
         # Initialize training variables
         self.start_epoch = 0
+        self.total_time = 0.0
         self.epoch = 0
         self.steps = 0
         self.batch_steps = 0
@@ -358,7 +359,14 @@ class BaseTrainer:
         if self.distributed:
             dist.barrier()
         if self.rank == 0:
-            logger.info("Finished training for %s epochs. Training complete.", self.num_epochs)
+            total_time = self.total_time
+            hours = int(total_time // 3600)
+            minutes = int((total_time % 3600) // 60)
+            seconds = int(total_time % 60)
+            logger.info("Finished training for %s epochs, starting from epoch %s. Training complete.",
+                        self.epoch + 1, self.start_epoch)
+            logger.info("Total training time: %sh %sm %ss",
+                        hours, minutes, seconds)
 
     def end_of_epoch(self, epoch, epoch_start_time):
         # Check early stopping criterion
@@ -381,6 +389,7 @@ class BaseTrainer:
         # Log epoch time and save checkpoint on rank 0 worker
         if self.rank == 0:
             epoch_time = time.time() - epoch_start_time
+            self.total_time += epoch_time
             if self.use_wandb:
                 wandb.log(data={"epoch_time": epoch_time},
                           step=self.steps)
@@ -412,7 +421,9 @@ class BaseTrainer:
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     'scheduler_state_dict': self.scheduler.state_dict() if self.scheduler else None,
                     'epoch': self.epoch,
-                    'best_val_score': self.best_val_score
+                    'best_val_score': self.best_val_score,
+                    'steps': self.steps,
+                    'total_time': self.total_time
                 }
                 if self.use_cuda_amp:
                     checkpoint['scaler_state_dict'] = self.scaler.state_dict()
@@ -425,7 +436,8 @@ class BaseTrainer:
                 'scheduler_state_dict': self.scheduler.state_dict() if self.scheduler else None,
                 'epoch': self.epoch,
                 'best_val_score': self.best_val_score,
-                'steps': self.steps
+                'steps': self.steps,
+                'total_time': self.total_time
             }
             #if self.wandb_id:
                 #checkpoint["wandb_id"] = self.wandb_id
@@ -444,6 +456,7 @@ class BaseTrainer:
         self.start_epoch = checkpoint['epoch'] + 1
         self.best_val_score = checkpoint['best_val_score']
         self.steps = checkpoint['steps']
+        self.total_time = checkpoint['total_time']
         if self.use_cuda_amp and 'scaler' in checkpoint:
             try:
                 self.scaler.load_state_dict(checkpoint['scaler'])
