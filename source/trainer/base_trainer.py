@@ -51,7 +51,7 @@ class BaseTrainer:
         self.device = self.local_rank if distributed else get_device(config.job.device.name)
         if torch.cuda.is_available() and distributed:
             torch.cuda.set_device(self.device)
-        self.save_dir = os.path.join(config.job.exp_dir, config.job.exp_name)
+        self.save_dir = os.path.join(config.exp_dir, config.exp_name)
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         logger.info('Saving results in %s.', self.save_dir)

@@ -12,6 +12,8 @@ defaults:
     - _self_
 
 experiment_type: "selfsupervised.MultichannelAPC"
+exp_dir: ./runs/multichannel_apc
+exp_name: test_experiment
 start_stage: 0
 stop_stage: 100
 data_path: /Users/JG96XG/Desktop/data_sets

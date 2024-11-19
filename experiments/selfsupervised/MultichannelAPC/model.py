@@ -37,15 +37,15 @@ class Model(nn.Module):
     def __init__(self,
                  cfg: ModelConfig = ModelConfig()):
         super().__init__()
-        self.feature_projection = nn.Linear(cfg.input_dim, cfg.encoder_embedding_dim) if cfg.feature_projection \
+        feature_projection = nn.Linear(cfg.input_dim, cfg.encoder_embedding_dim) if cfg.feature_projection \
             else nn.Identity()
-        self.feature_extractor = build_extractor(cfg.feature_extractor)
-        self.encoder =  build_encoder(cfg.encoder)
+        feature_extractor = build_extractor(cfg.feature_extractor)
+        encoder =  build_encoder(cfg.encoder)
         self.model = MultichannelAPC(input_dim=cfg.input_dim,
-                                     feature_extractor=self.feature_extractor,
+                                     feature_extractor=feature_extractor,
                                      feature_dropout=cfg.feature_dropout,
-                                     feature_projection=self.feature_projection,
-                                     encoder=self.encoder,
+                                     feature_projection=feature_projection,
+                                     encoder=encoder,
                                      encoder_embedding_dim=cfg.encoder_embedding_dim,
                                      n_channels=cfg.n_channels)
 

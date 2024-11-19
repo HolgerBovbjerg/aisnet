@@ -1,5 +1,5 @@
 defaults:
-    - model: default
+    - model: large
     - data: default
     - augment: default
     - loss: cross_entropy
@@ -13,7 +13,7 @@ defaults:
 
 experiment_type: "example"
 exp_dir: ./runs/example
-exp_name: example_experiment
+exp_name: example_experiment2
 start_stage: 0
 stop_stage: 100
 data_path: /Users/JG96XG/Desktop/data_sets
