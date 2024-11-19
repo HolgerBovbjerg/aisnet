@@ -27,3 +27,6 @@ class ExampleEvaluator:
         # Experiment settings
         self.seed = config.training.seed
 
+    def evaluate(self):
+        return None
+

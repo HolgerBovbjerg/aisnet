@@ -548,4 +548,5 @@ class BaseTrainer:
                       step=self.steps)
         self.last_validation_step = self.steps
         logger.info(f"Average Validation Loss: {avg_loss:.3f}")
+        self.model.train()
         return avg_loss
