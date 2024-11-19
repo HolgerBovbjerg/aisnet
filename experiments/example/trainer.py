@@ -126,6 +126,7 @@ class ExampleTrainer(BaseTrainer):
                       step=self.steps)
         self.last_validation_step = self.steps
         logger.info(f"Average Validation EER: {avg_eer:.3f}")
+        self.model.train()
         return avg_eer
 
 

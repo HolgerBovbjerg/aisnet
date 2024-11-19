@@ -2,6 +2,7 @@ import logging
 
 import hydra
 from omegaconf import OmegaConf, open_dict
+from omegaconf.errors import ConfigAttributeError
 
 from hydra.core.hydra_config import HydraConfig
 
@@ -30,8 +31,13 @@ def main(config: OmegaConf) -> None:
         print(e)
 
     # Create trainer and start training
+    try:
+        distributed = config.job.device.name == "distributed"
+    except ConfigAttributeError as e:
+        print("Did not find config.job.device.name in config, defaulting to non-distributed training.")
+        print(e)
+        distributed = False
 
-    distributed = config.job.device.name == "distributed"
     if distributed:
         if HydraConfig.initialized():
             with open_dict(config):
