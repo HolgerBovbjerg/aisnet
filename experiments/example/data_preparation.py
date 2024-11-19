@@ -87,7 +87,7 @@ def get_dataset_path(datasets, name):
 
 
 def download_librispeech_split(librispeech_root, split):
-    if Path(librispeech_root / split).is_dir():
+    if Path(str(os.path.join(librispeech_root,  split))).is_dir():
         logger.info(f"Dataset '{split}' already exists in {librispeech_root}. Skipping download...")
         return
     path = check_database("LibriSpeech")
