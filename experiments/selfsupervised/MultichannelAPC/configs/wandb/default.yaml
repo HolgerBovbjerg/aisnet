@@ -1,8 +1,8 @@
 enabled: True # Whether to enable wandb logging
 project: wandb_example_project # Name of your wandb project
 entity: null # If you have multiple associated wandb entities (usernames/teams), pass entity name
-name: ${job.exp_name} # Name of experiment.
-group: ${job.exp_name} # Specify an experiment group to enabl organization individual runs into a larger group. For example, runs with different seeds.
+name: ${exp_name} # Name of experiment.
+group: ${exp_name} # Specify an experiment group to enabl organization individual runs into a larger group. For example, runs with different seeds.
 job_type: null # Specify the type of run, e.g., "train".
 tags: null # A list of strings, which will populate the list of tags on this run in the UI.
 watch_model: True # Whether to log model parameters and gradients on wandb
