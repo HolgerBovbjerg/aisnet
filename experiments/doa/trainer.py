@@ -35,7 +35,7 @@ class DoATrainer(BaseTrainer):
         self.initialize_metrics()
         # Generate all combinations of azimuth and elevation and create label map
         elevation_grid, azimuth_grid = torch.meshgrid(model.elevation_angles, model.azimuth_angles, indexing="xy")
-        self.angle_combinations = torch.stack([elevation_grid.flatten(), azimuth_grid.flatten()], dim=1)
+        self.angle_combinations = torch.stack([elevation_grid.flatten(), azimuth_grid.flatten()], dim=1).to(self.device)
 
     # Define custom model forward pass. Should always return: loss, predictions, targets
     # The forward pass will always receive a single element 'data' from the data loader.
@@ -44,14 +44,14 @@ class DoATrainer(BaseTrainer):
         # Unpack data batch
         input_data, lengths, targets = data
 
+        # Transfer data to device
+        input_data, lengths, targets = (input_data.to(self.device), lengths.to(self.device), targets.to(self.device))
+
         # Compute targets
         matches = (self.angle_combinations[:, None, :] == targets[None, :, :]).all(
             dim=-1)  # Shape: (num_combinations, batch_size)
         matches = matches.to(torch.long)
         targets = matches.argmax(dim=0)
-
-        # Transfer data to device
-        input_data, lengths, targets = (input_data.to(self.device), lengths.to(self.device), targets.to(self.device))
 
         # Make prediction
         predictions, lengths = self.model(input_data, lengths=lengths)
@@ -67,7 +67,7 @@ class DoATrainer(BaseTrainer):
     def compute_batch_metrics(self, loss, predictions, targets):
         predicted_angle = predictions.argmax(dim=-1)
         predicted_angle = predicted_angle[targets != -1]
-        predicted_angle = self.angle_combinations.to(predicted_angle.device)[predicted_angle]
+        predicted_angle = self.angle_combinations[predicted_angle]
         targets = targets[targets != -1]
         targets = self.angle_combinations[targets]
 
