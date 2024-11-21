@@ -90,8 +90,12 @@ Hydra is used for managing configurations.
 
 The main configuration is found in ```configs/config.yaml```.
 This file defines the default configuration of the experiment.
+In theory the configuration file could be any .yaml file.
+In our case, we are using a Trainer module based on source.trainer.BaseTrainer,
+which expects certain entries in the configuration file.
 
-The configuration is modular such that each configuration area has its own module.
+Although we could have one big configuration files, the configuration in this example is modular such that each configuration area has its own module.
+This makes it easier to organize configurations for large experiments, with many settings.
 For instance, ```configs/job/default.yaml``` contains settings related to the job such as number of workers, device (cpu/gpu), experiment name etc.
 
 Besides the configuration modules ```config.yaml``` has the following settings:
