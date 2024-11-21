@@ -31,7 +31,7 @@ class DoATrainer(BaseTrainer):
         # Call the BaseTrainer initializer to inherit setup
         super().__init__(config, model, train_loader, val_loader, distributed)
         # Set experiment specific variable
-        self.metrics_to_log = ["loss", "mean_angular_error", "mean_angular_std", "accuracy@10degree"]
+        self.metrics_to_log = ["loss", "mean_angular_error", "std_angular_error", "accuracy@10degree", "median_angular_error"]
         self.initialize_metrics()
         # Generate all combinations of azimuth and elevation and create label map
         elevation_grid, azimuth_grid = torch.meshgrid(model.elevation_angles, model.azimuth_angles, indexing="xy")
@@ -84,7 +84,8 @@ class DoATrainer(BaseTrainer):
         return {"loss": loss,
                 "mean_angular_error": error.mean(),
                 "accuracy@10degree": accuracy,
-                "mean_angular_std": error.std()}
+                "std_angular_error": error.std(),
+                "median_angular_error": error.median(),}
 
     # Define custom validation loop
     def validate(self):
