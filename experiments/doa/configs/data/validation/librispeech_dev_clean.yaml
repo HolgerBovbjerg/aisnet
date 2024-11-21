@@ -1,12 +1,8 @@
-
 data_sets:
-    LibriSpeech:
-        root: ${data_path}LibriSpeech/
-        splits:
-            - dev-clean
-buffer_size: 10000
-load_from: raw
-load_from_tar: False
-segment_max_size: 96000
-max_token_count: 640000
-min_length: 400
+    BinauralLibriSpeech:
+        root: ${data_path}/BinauralLibriSpeech
+        metadata_filename: metadata.csv
+        subset: horizontal_plane_front_only
+        splits: 
+         - test-clean
+batch_size: 4

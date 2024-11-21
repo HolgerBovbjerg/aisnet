@@ -5,8 +5,8 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 
-from .STFT import STFT
-from .GCC import apply_phase_transform
+from .stft import STFT
+from .gcc import apply_phase_transform
 
 
 @dataclass

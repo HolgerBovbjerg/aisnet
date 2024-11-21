@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .STFT import STFT
+from .stft import STFT
 
 
 def add_noise_to_waveform(waveforms: torch.Tensor, snr_db: float) -> torch.Tensor:

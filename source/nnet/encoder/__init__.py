@@ -9,7 +9,7 @@ from .xLSTMEncoder import xLSTMEncoder, xLSTMEncoderConfig
 encoder_classes = {
     "conformer": ConformerEncoder,
     "lstm": LSTMEncoder,
-    "xLSTM": xLSTMEncoder
+    "xlstm": xLSTMEncoder
 }
 
 
