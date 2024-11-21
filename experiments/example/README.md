@@ -96,6 +96,9 @@ For instance, ```configs/job/default.yaml``` contains settings related to the jo
 
 Besides the configuration modules ```config.yaml``` has the following settings:
 * experiment_type: "example"
+* exp_dir: <path_to_where_experiment_outputs_are_saved>
+* exp_name: name_of_experiment
+* experiment_type: "doa"
 * start_stage: 0 
 * stop_stage: 100 
 * data_path: </path/to/data/folder>
@@ -103,6 +106,11 @@ Besides the configuration modules ```config.yaml``` has the following settings:
 The ```experiment_type``` setting defines the type of experiment you are running.
 This changes where ```train.py``` looks for a runscript ```run.py```.
 For example, when specifying ```example``` train.py will try to import ```experiments.example.run```.
+
+The entry ```exp_dir``` is used to determine where the outputs from the experiment, 
+such as checkpoints and logs, are saved.
+
+The ```exp_name``` is the experiment identifier, and will also be used to identify the experiment on wandb if used.
 
 The ´´´start_stage´´´and ´´´stop_stage´´´ options are used in run.py to define which stages to run.
 Notice that the script only has two stages while the default stop stage is 100.
@@ -152,10 +160,10 @@ Additionally, because we now have more speakers, we change the number of output 
 **Custom config files**
 Instead of using commandline overrides, we could also create a new config file, e.g., ```my_custom_config.yaml```, with a custom configuration, and override the default config name via commandline:
 ```bash
-python cli/train.py --config_name my_custom_config.yaml
+python cli/train.py --config_name my_custom_config
 ```
 The custom config should be placed inside the configs folder at the same level as ```config.yaml```.
-The default ```config_name``` is ```config.yaml```.  
+The default ```config_name``` is ```config```.  
 
 Alternatively, you can create a new folder for custom configs, e.g., ```my_configs```, and point the script to look in this folder via the ```--config_path``` argument.
 ```bash
@@ -166,7 +174,7 @@ The argument given to ```--config_path``` should be an absolute path or a path r
 The default value is ```../experiments/example/configs```.
 
 ### Running other experiments
-Let us say we have another experiment ```example2``` with a configuration file using the default name ```config.yaml``` inside the folder ```../experiments/example2/configs```.
+Let us say we have another experiment ```example2``` with a configuration file using the default config file name ```config.yaml``` inside the folder ```../experiments/example2/configs```.
 We could run this experiment by overriding the default config path as follows:
 
 ```bash
