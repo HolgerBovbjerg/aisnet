@@ -7,10 +7,9 @@ from torch import nn
 
 
 from source.utils import count_parameters
-from source.nnet.feature_extraction import build_extractor, FeatureExtractorConfig
+from source.nnet.feature_extraction import build_feature_extractor, FeatureExtractorConfig
 from source.nnet.encoder import build_encoder, EncoderConfig
 from source.models.selfsupervised.MultichannelAPC import MultichannelAPC
-from source.nnet.utils.padding import lengths_to_padding_mask
 
 
 logger = getLogger(__name__)
@@ -39,7 +38,7 @@ class Model(nn.Module):
         super().__init__()
         feature_projection = nn.Linear(cfg.input_dim, cfg.encoder_embedding_dim) if cfg.feature_projection \
             else nn.Identity()
-        feature_extractor = build_extractor(cfg.feature_extractor)
+        feature_extractor = build_feature_extractor(cfg.feature_extractor)
         encoder =  build_encoder(cfg.encoder)
         self.model = MultichannelAPC(input_dim=cfg.input_dim,
                                      feature_extractor=feature_extractor,
