@@ -67,7 +67,7 @@ class DoATrainer(BaseTrainer):
     def compute_batch_metrics(self, loss, predictions, targets):
         predicted_angle = predictions.argmax(dim=-1)
         predicted_angle = predicted_angle[targets != -1]
-        predicted_angle = self.angle_combinations[predicted_angle]
+        predicted_angle = self.angle_combinations.to(predicted_angle.device)[predicted_angle]
         targets = targets[targets != -1]
         targets = self.angle_combinations[targets]
 
