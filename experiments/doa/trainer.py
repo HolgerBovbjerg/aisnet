@@ -71,10 +71,10 @@ class DoATrainer(BaseTrainer):
         targets = targets[targets != -1]
         targets = self.angle_combinations[targets]
 
-        predicted_angle = spherical_to_cartesian(torch.ones(predicted_angle.size(0)),
+        predicted_angle = spherical_to_cartesian(torch.ones(predicted_angle.size(0), device=predicted_angle.device),
                                                  torch.deg2rad(predicted_angle[:, 0]),
                                                  torch.deg2rad(predicted_angle[:, 1]))
-        targets = spherical_to_cartesian(torch.ones(targets.size(0)),
+        targets = spherical_to_cartesian(torch.ones(targets.size(0), device=targets.device),
                                          torch.deg2rad(targets[:, 0]),
                                          torch.deg2rad(targets[:, 1]))
 
