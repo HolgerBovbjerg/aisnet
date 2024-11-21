@@ -237,6 +237,3 @@ def setup_dataloader(config, distributed=False):
                                         collate_fn=partial(pad_collate_eval, augmentor=augmentor),
                                         num_workers=num_workers)
     return train_loader, validation_loader, label_mapping
-
-
-
