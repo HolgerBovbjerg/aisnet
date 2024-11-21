@@ -1,5 +1,5 @@
 log_interval: 10
-validation_interval: null
+validation_interval: 10
 pin_memory: False
 num_workers: 4
 device:

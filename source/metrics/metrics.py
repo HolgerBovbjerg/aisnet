@@ -23,8 +23,8 @@ def root_mean_square_angular_error(errors: torch.Tensor):
     return torch.sqrt(torch.mean(errors ** 2))
 
 
-def doa_threshold_accuracy(errors: torch.Tensor, threshold_radians: float):
-    within_threshold = errors < threshold_radians
+def threshold_accuracy(errors: torch.Tensor, threshold: float):
+    within_threshold = errors < threshold
     return torch.mean(within_threshold.float())
 
 
@@ -37,8 +37,6 @@ def mse(pred: torch.Tensor, true: torch.Tensor):
 
 
 def equal_error_rate(pred: np.ndarray, target: np.ndarray):
-    # EER (not backpropagated)
-
     # Snippet from https://yangcha.github.io/EER-ROC/
     fpr, tpr, thresholds = roc_curve(target.flatten(), pred.flatten())
     eer = brentq(lambda x: 1. - x - interp1d(fpr, tpr)(x), 0., 1.)
