@@ -5,4 +5,4 @@ data_sets:
         subset: horizontal_plane_front_only
         splits: 
          - test-clean
-batch_size: 4
+batch_size: 64

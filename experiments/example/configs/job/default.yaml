@@ -3,5 +3,5 @@ validation_interval: 10000
 pin_memory: False
 num_workers: 4
 device:
-    name: cpu
+    name: auto
     backend: null

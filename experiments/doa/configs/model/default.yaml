@@ -11,6 +11,6 @@ elevation_range: [90., 90.]
 azimuth_range: [-90., 90.]
 feature_dim: 514
 feature_projection: True
-feature_dropout: 0.
-encoder_embedding_dim: 64
+feature_dropout: 0.1
+encoder_embedding_dim: 512
 sample_rate: 16000
