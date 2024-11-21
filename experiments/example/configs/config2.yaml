@@ -16,5 +16,5 @@ exp_dir: ./runs/example
 exp_name: example_experiment2
 start_stage: 0
 stop_stage: 100
-data_path: /Users/JG96XG/Desktop/data_sets
+data_path: /home/es.aau.dk/jg96xg/Data/
 
