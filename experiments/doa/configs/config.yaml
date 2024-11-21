@@ -2,7 +2,7 @@ defaults:
     - model: default
     - data: default
     - augment: default
-    - loss: l1
+    - loss: cross_entropy
     - optimizer: adamw
     - scheduler: cosine_annealing_warmup_restart
     - training: default
@@ -11,8 +11,10 @@ defaults:
     - hydra: default
     - _self_
 
+exp_dir: ./runs
+exp_name: doa_experiment
 experiment_type: "doa"
 start_stage: 0
 stop_stage: 100
-data_path: /Users/JG96XG/Desktop/data_sets/
+data_path: /Users/JG96XG/Desktop/data_sets
 

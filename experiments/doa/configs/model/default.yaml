@@ -1,8 +1,7 @@
 defaults:
     - feature_extractor: stft
     - encoder: lstm
-feature_dim: 64
-embedding_dim: 64
+num_channels: 2
 microphone_array:
     - [0., 0.09, 0.]
     - [0., -0.09, 0.]
@@ -10,3 +9,8 @@ elevation_resolution: 5.
 azimuth_resolution: 5.
 elevation_range: [90., 90.]
 azimuth_range: [-90., 90.]
+feature_dim: 514
+feature_projection: True
+feature_dropout: 0.
+encoder_embedding_dim: 64
+sample_rate: 16000

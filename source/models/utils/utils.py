@@ -1,4 +1,11 @@
+import logging
+import os
+
+import torch
 from torch import nn
+
+
+logger = logging.getLogger(__name__)
 
 
 def freeze_model_parameters(model: nn.Module):
@@ -138,3 +145,35 @@ def summarize_model(module):
     print(f"    Number of trainable parameters: {format_num(trainable_params)} ({(trainable_params / total_params) * 100:.1f}%)")
     print(f"    Size: {param_size / (1024 ** 2):.1f} MB")
     print(f"    Type: {next(module.parameters()).dtype}")
+
+
+def load_partial_checkpoints(model, partial_checkpoints: dict):
+    """
+    Loads partial checkpoints for specific model modules.
+
+    Args:
+        partial_checkpoints (dict): A dictionary where keys are model module names
+                                    (e.g., "encoder") and values are paths to their checkpoints.
+    """
+    for module_name, checkpoint_path in partial_checkpoints.items():
+        if not hasattr(model, module_name):
+            logger.warning(
+                f"Model has no attribute '{module_name}'. Skipping loading checkpoint from {checkpoint_path}.")
+            continue
+
+        if not os.path.exists(checkpoint_path):
+            logger.warning(f"Checkpoint path '{checkpoint_path}' does not exist. Skipping.")
+            continue
+
+        module = getattr(model, module_name)
+        try:
+            checkpoint = torch.load(checkpoint_path, map_location="cpu")
+            if 'state_dict' in checkpoint:
+                module.load_state_dict(checkpoint['state_dict'])
+            else:
+                module.load_state_dict(checkpoint)
+            logger.info(f"Loaded checkpoint for '{module_name}' from {checkpoint_path}.")
+        except Exception as e:
+            logger.error(f"Failed to load checkpoint for '{module_name}' from {checkpoint_path}: {e}")
+
+    return model

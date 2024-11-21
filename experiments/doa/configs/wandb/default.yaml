@@ -1,7 +1,11 @@
-enabled: False
-project: "wandb_project_name"
-entity: "wandb_entity"
-name: ${job.exp_name}
-group: ${job.exp_name}
+enabled: True
+project: "DoA prediction"
+entity: "ais-es-aau"
+name: ${exp_name}
+group: ${exp_name}
 job_type: "train"
 tags: null
+watch_model: True # Whether to log model parameters and gradients on wandb
+watch_model_log_frequency: 1000 # Logs model every "step". Ignored if watch_model=False.
+watch_model_log: "all" # "gradients", "parameters", or "all". Ignored if watch_model=False.
+#resume: allow

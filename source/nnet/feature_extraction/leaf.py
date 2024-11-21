@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .Gabor import Gabor
+from .gabor import Gabor
 
 
 class GaussianLowPass(nn.Module):

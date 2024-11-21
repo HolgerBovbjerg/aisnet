@@ -1,8 +1,8 @@
-type: lstm
+name: lstm
 config:
-    input_dim: ${model.feature_dim}
-    hidden_dim: ${model.embedding_dim}
-    num_layers: 3
+    input_dim: ${model.encoder_embedding_dim}
+    hidden_dim: ${model.encoder_embedding_dim}
+    num_layers: 1
     bias: True
     dropout: 0.
     projection_size: 0

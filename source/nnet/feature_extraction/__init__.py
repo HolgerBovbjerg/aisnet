@@ -1,23 +1,23 @@
 from dataclasses import dataclass, field
 from typing import Union
 
-from .STFT import STFT, STFTConfig
-from .LogMel import LogMel, LogMelConfig
-from .Gabor import Gabor, ComplexGaborFilter, RealImagGaborFilter, GaborConfig
-from .GCC import GCC, GCCConfig
-from .SRP import SRP, SRPConfig
-from .LEAF import LEAF, LEAFConfig
-from .CNNFeatureExtractor import CNNFeatureExtractor, CNNFeatureExtractorConfig
+from .stft import STFT, STFTConfig
+from .logmel import LogMel, LogMelConfig
+from .gabor import Gabor, ComplexGaborFilter, RealImagGaborFilter, GaborConfig
+from .gcc import GCC, GCCConfig
+from .srp import SRP, SRPConfig
+from .leaf import LEAF, LEAFConfig
+from .cnn_feature_extractor import CNNFeatureExtractor, CNNFeatureExtractorConfig
 
 
 feature_extractor_classes = {
-    "STFT": STFT,
-    "LogMel": LogMel,
-    "GCC": GCC,
-    "SRP": SRP,
-    "LEAF": LEAF,
-    "CNNFeatureExtractor": CNNFeatureExtractor,
-    "Gabor": GaborConfig
+    "stft": STFT,
+    "logmel": LogMel,
+    "gcc": GCC,
+    "srp": SRP,
+    "leaf": LEAF,
+    "cnn_feature_extractor": CNNFeatureExtractor,
+    "gabor": GaborConfig
 }
 
 
@@ -28,7 +28,7 @@ class FeatureExtractorConfig:
         = field(default_factory=CNNFeatureExtractorConfig)
 
 
-def build_extractor(config: FeatureExtractorConfig):
+def build_feature_extractor(config: FeatureExtractorConfig):
     try:
         return feature_extractor_classes[config.name](**config.config)
     except KeyError as e:
