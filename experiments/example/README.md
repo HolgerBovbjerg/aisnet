@@ -88,15 +88,15 @@ In stage 2, the model will be evaluated on a test set.
 ### Configuration Management
 Hydra is used for managing configurations.
 
-The main configuration is found in ```configs/config.yaml```.
-This file defines the default configuration of the experiment.
+The main configuration for the example project is found in ```<aisnet_root>/experiments/example/configs/config.yaml```.
+This file defines the default configuration of the example experiment.
 In theory the configuration file could be any .yaml file.
-In our case, we are using a Trainer module based on source.trainer.BaseTrainer,
+However, in our case, we are using a Trainer module subclassed from source.trainer.BaseTrainer,
 which expects certain entries in the configuration file.
 
-Although we could have one big configuration files, the configuration in this example is modular such that each configuration area has its own module.
+Although we could have a single big configuration files, the configuration in this example is modularized such that each configuration area has its own configuration module.
 This makes it easier to organize configurations for large experiments, with many settings.
-For instance, ```configs/job/default.yaml``` contains settings related to the job such as number of workers, device (cpu/gpu), experiment name etc.
+For instance, ```configs/job/default.yaml``` contains settings related to the job such as number of workers and device (cpu/gpu).
 
 Besides the configuration modules ```config.yaml``` has the following settings:
 * experiment_type: "example"
@@ -125,11 +125,11 @@ The parameter ```data_path``` is used to define where the data used in the exper
 #### Stage 0: Data preparation
 In the case of this experiment, the data can be automatically downloaded. 
 However, the script will check if the data already exists in the specifed data_path and in this case skip downloading the data.
-If it does not already exist, the script will check ```data/database.yaml``` to see if the data set is defined here. 
-If the data set is not defined in ```<aisnet_root>/data/database.yaml``` an error will be thrown.
-Therefore, it can be necessary to update ```data/database.yaml``` if you wish to use a new dataset.
+If it does not already exist, the script will check ```<aisnet_root>/data/database.yaml``` to see if the data set is defined here. 
+If the data set is not defined in ```database.yaml``` an error will be thrown.
+Therefore, it can be necessary to update ```database.yaml``` if you wish to use a new dataset.
 
-The file ```<aisnet_root>data/database.yaml``` stores paths to data sets used in experiments.
+The file ```database.yaml``` stores paths to data sets used in experiments.
 For each data set name, one can either specify ```download``` or set a path ```/path/to/data_set/root/```.
 * If download is specified, the data set will be downloaded to ```data_path``` defined in the configuration.
 * If a path is specified, the script will copy the files to ```data_path```. 
@@ -143,6 +143,17 @@ These will be passed to a ```trainer``` module defined in ```trainer.py``` and t
 
 #### Stage 2: Model evaluation
 In the evaluation stage, the trained model will be loaded from a checkpoint and evaluated using the ```evaluator``` defined in ```evaluator.py```.
+
+### Running experiments 
+To start the example experiment simply run:
+```bash
+python cli/train.py
+```
+
+Note that this should be called from the repository root "```<aisnet_root>```". 
+
+Here we don't need to specify any configuration as the example experiment is the default.
+
 
 #### Customizing experiment configuration
 **Commandline**: 
