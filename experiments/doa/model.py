@@ -1,9 +1,9 @@
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass
 from logging import getLogger
 from typing import Tuple, Union, List, Optional
 from math import ceil
 
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 import torch
 from torch import nn
 
@@ -23,19 +23,31 @@ def list_to_tensor(input_list):
 
 @dataclass
 class DoaModelConfig:
-    microphone_array: Tuple[List[float]] = ([0, -0.09, 0], [0, 0.09, 0])
+    microphone_array: Tuple[List[float], ...] = ([0, -0.09, 0], [0, 0.09, 0])
     elevation_resolution: float = 10.
     azimuth_resolution: float = 5.
     elevation_range: Tuple[float, float] = (90., 90.)
     azimuth_range: Tuple[float, float] = (-90., 90.)
     feature_dim: int = 40
+    feature_channels: int = 2
     feature_projection: bool = True
     feature_dropout: float = 0.
+    feature_dropout_first: bool = False
     encoder_embedding_dim: int = 512
-    feature_extractor: FeatureExtractorConfig = field(default_factory=FeatureExtractorConfig)
-    encoder: EncoderConfig = field(default_factory=EncoderConfig)
+    feature_extractor: Optional[Union[FeatureExtractorConfig, dict]] = None
+    encoder: Optional[Union[EncoderConfig, dict]] = None
     sample_rate: int = 16000
     num_channels: int = 2
+
+    def __post_init__(self):
+        if isinstance(self.encoder, (dict, DictConfig)):
+            self.encoder = EncoderConfig(**self.encoder)
+        elif not isinstance(self.encoder, EncoderConfig):
+            raise ValueError("Wrong input for 'encoder'.")
+        if isinstance(self.feature_extractor, (dict, DictConfig)):
+            self.feature_extractor = FeatureExtractorConfig(**self.feature_extractor)
+        elif not isinstance(self.feature_extractor, FeatureExtractorConfig):
+            raise ValueError("Wrong input for 'feature_extractor'.")
 
 
 class DoaModel(nn.Module):
@@ -44,7 +56,7 @@ class DoaModel(nn.Module):
     """
 
     def __init__(self,
-                 cfg: DoaModelConfig = DoaModelConfig()):
+                 cfg: DoaModelConfig):
         super().__init__()
 
         self.azimuth_resolution = cfg.azimuth_resolution
@@ -56,9 +68,10 @@ class DoaModel(nn.Module):
         self.n_mics = len(self.microphone_array)
         assert self.n_mics == self.num_channels, "Microphone array elements and channels should be the same"
         self.feature_dim = cfg.feature_dim
+        self.feature_channels = cfg.feature_channels
         self.sample_rate = cfg.sample_rate
         self.feature_extractor = build_feature_extractor(cfg.feature_extractor)
-        self.feature_projection = InputProjection(self.feature_dim * self.n_mics, cfg.encoder_embedding_dim, dropout_rate=cfg.feature_dropout) \
+        self.feature_projection = InputProjection(self.feature_dim * self.feature_channels, cfg.encoder_embedding_dim, dropout_rate=cfg.feature_dropout, dropout_first=cfg.feature_dropout_first) \
             if cfg.feature_projection else nn.Identity()
         self.encoder = build_encoder(cfg.encoder)
         self.elevation_angles, self.azimuth_angles = self._get_elevation_and_azimuth_angles()
@@ -84,9 +97,9 @@ class DoaModel(nn.Module):
     def forward(self, x, lengths=None):
         init_length = x.size(-1)
         x = self.feature_extractor(x)
+        x = x.transpose(1, 2)
         # Stack channels
         if len(x.size()) == 4:
-            x = x.transpose(1, 2)
             x = x.reshape(x.size(0), x.size(1), -1)
         # Project features to input dim of encoder
         x = self.feature_projection(x)

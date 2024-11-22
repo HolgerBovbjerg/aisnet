@@ -1,5 +1,5 @@
 defaults:
-    - model: tiny
+    - model: gcc_lstm
     - data: default
     - augment: default
     - loss: cross_entropy
@@ -19,6 +19,11 @@ stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data/
 job:
     num_workers: 4
+    device:
+        name: cpu
+        backend: null
+training:
+    gradient_accumulation_steps: 16
 data:
     train:
         batch_size: 4
