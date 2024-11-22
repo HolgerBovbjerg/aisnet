@@ -118,10 +118,10 @@ class GCC(nn.Module):
     def estimate_delay(self, r: List[torch.Tensor]):
         delays = []
         for i, gcc in enumerate(r):
-            delays.append(self.delays[i][torch.argmax(gcc, dim=-1)])
+            delays.append(self.delays[i][torch.argmax(gcc, dim=0)])
         return delays
 
-    def estimate_tdoa(self, r: torch.Tensor):
+    def estimate_tdoa(self, r: List[torch.Tensor]):
         delay_samples = self.estimate_delay(r)
         tdoa = [delay / self.sample_rate for delay in delay_samples]
         return tdoa

@@ -28,7 +28,7 @@ class LSTMEncoder(nn.Module):
     """
     def __init__(self, input_dim, hidden_dim, num_layers, dropout=0., projection_size=0, **kwargs):
         super().__init__()
-        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout,
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, dropout=dropout,
                             proj_size=projection_size, **kwargs)
 
     def forward(self, x, lengths, hidden=None, output_hidden: bool = False):

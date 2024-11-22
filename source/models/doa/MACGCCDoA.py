@@ -4,13 +4,13 @@ from typing import Tuple
 import torch
 from torch import nn
 
-from source.nnet.feature_extraction import GCCPHAT
+from source.nnet.feature_extraction import GCC
 
 
 def get_feature_extractor(name: str, **kwargs) -> nn.Module:
     if name == "gcc_phat":
 
-        return GCCPHAT(**kwargs)
+        return GCC(**kwargs)
     else:
         return None
 
@@ -35,7 +35,7 @@ class MACGCCDoA(nn.Module):
         c_sound = 343
         t_max = dist_mics / c_sound
         t_max_samples = torch.floor(t_max * sample_rate)
-        self.gcc_phat = GCCPHAT(n_fft=n_fft, window_length=window_length, hop_length=hop_length,
+        self.gcc_phat = GCC(n_fft=n_fft, window_length=window_length, hop_length=hop_length,
                                 sample_rate=sample_rate, window_type=window_type,
                                 center=center, max_delay=t_max_samples, n_mics=microphone_positions.size(0))
         self.elevation_resolution = elevation_resolution

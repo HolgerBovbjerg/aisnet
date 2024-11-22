@@ -5,13 +5,13 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from source.nnet.feature_extraction import GCCPHAT, Gabor
+from source.nnet.feature_extraction import GCC, Gabor
 
 
 def get_feature_extractor(name: str, **kwargs) -> nn.Module:
     if name == "gcc_phat":
 
-        return GCCPHAT(**kwargs)
+        return GCC(**kwargs)
     else:
         return None
 

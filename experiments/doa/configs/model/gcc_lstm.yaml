@@ -1,0 +1,22 @@
+defaults:
+    - feature_extractor: gcc
+    - encoder: lstm
+
+num_channels: 2
+microphone_array:
+    - [0., 0.09, 0.]
+    - [0., -0.09, 0.]
+elevation_resolution: 5.
+azimuth_resolution: 5.
+elevation_range: [90., 90.]
+azimuth_range: [-90., 90.]
+feature_dim: 17
+feature_channels: 1
+feature_projection: True
+feature_dropout: 0.1
+feature_dropout_first: False
+encoder_embedding_dim: 64
+sample_rate: 16000
+encoder:
+  config:
+    num_layers: 2  # Override num_layers for the lstm encoder

@@ -1,5 +1,5 @@
 defaults:
-    - model: default
+    - model: stft_power_phase_lstm
     - data: default
     - augment: default
     - loss: cross_entropy

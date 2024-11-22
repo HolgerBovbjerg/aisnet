@@ -1,4 +1,4 @@
-type: cnn
+name: cnn_feature_extractor
 config:
     in_channels:
         - 1
