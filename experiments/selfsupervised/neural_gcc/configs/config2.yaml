@@ -1,0 +1,20 @@
+defaults:
+    - model: large
+    - data: default
+    - augment: default
+    - loss: cross_entropy
+    - optimizer: adamw
+    - scheduler: cosine_annealing
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - _self_
+
+experiment_type: "selfsupervised.neural_gcc"
+exp_dir: ./runs/neural_gcc
+exp_name: neural_gcc
+start_stage: 0
+stop_stage: 100
+data_path: /home/es.aau.dk/jg96xg/Data/
+

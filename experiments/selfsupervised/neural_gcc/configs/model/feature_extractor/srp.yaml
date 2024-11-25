@@ -1,0 +1,12 @@
+name: srp
+config:
+    n_fft: 512
+    window_length: 400
+    hop_length: 160
+    sample_rate: 16000
+    center: True
+    window_type: hann
+    max_delay:
+        - 8
+    n_mics: 2
+    phase_transform: True

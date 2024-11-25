@@ -1,0 +1,16 @@
+data_sets:
+    LibriSpeech:
+        root: ${data_path}/LibriSpeech
+        splits:
+            - train-clean-100
+            - train-clean-360
+            - train-other-500
+sampling_rate: 16000
+load_from_tar: False
+buffer_size: 10000
+max_token_count: 480000
+load_from: raw
+clean_and_noisy: True
+segment_max_size: null
+min_length: 8000
+hrtf_folder: "/Users/JG96XG/Desktop/data_sets/HRTFs/ARI/ari_splits/train/"

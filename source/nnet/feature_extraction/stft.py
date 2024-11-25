@@ -41,7 +41,6 @@ class STFT(nn.Module):
         if window_type not in window_functions:
             raise ValueError(
                 f"Unsupported window type: {window_type}. Supported types are: {list(window_functions.keys())}")
-        self.window = window_functions[window_type](window_length)
         self.register_buffer("window", window_functions[window_type](window_length))
         self.postprocessing_function = self._select_postprocessing_function(output_type)
 

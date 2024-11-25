@@ -1,0 +1,5 @@
+scheduler_type: cosine_annealing
+scheduler_kwargs:
+    eta_min: 0.0000005
+    last_epoch : -1
+steps_per_epoch: null

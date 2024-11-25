@@ -1,0 +1,5 @@
+noise:
+    noise_paths: ${data_path}/Musan/musan/noise
+    snr_db_min: -5
+    snr_db_max: 20
+    p: 0.8

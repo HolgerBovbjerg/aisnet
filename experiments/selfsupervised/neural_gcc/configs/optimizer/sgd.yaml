@@ -1,0 +1,6 @@
+opt_type: SGD
+opt_kwargs:
+    lr: ${training.lr}
+    momentum: 0
+    dampening: 0
+    weight_decay: 0.01
