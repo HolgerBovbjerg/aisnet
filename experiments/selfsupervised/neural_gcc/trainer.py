@@ -26,7 +26,7 @@ class NeuralGCCTrainer(BaseTrainer):
         # Call the BaseTrainer initializer to inherit setup
         super().__init__(config, model, train_loader, val_loader, distributed)
         # Set experiment specific variable
-        self.metrics_to_log = ["loss"]
+        self.metrics_to_log = ["loss", "prediction_var", "target_var"]
         self.initialize_metrics()
 
     # Define custom model forward pass. Should always return: loss, predictions, targets
@@ -55,7 +55,9 @@ class NeuralGCCTrainer(BaseTrainer):
 
     # Define custom function to compute metrics. Should always return a dict with 'metric_name: value' key/value pairs.
     def compute_batch_metrics(self, loss, predictions, targets):
-        return {"loss": loss}
+        prediction_var = predictions.var()
+        target_var = targets.var()
+        return {"loss": loss, "prediction_var": prediction_var, "target_var": target_var}
 
     # Define custom validation loop
     def validate(self):
@@ -70,19 +72,26 @@ class NeuralGCCTrainer(BaseTrainer):
 
         self.model.eval()
         with torch.no_grad():
-            total_loss = 0.0
             batch_index = 0
             for batch_index, data in enumerate(self.val_loader):
-                loss, _, _ = self.forward_pass(data)
-                total_loss += loss.item()
+                loss, predictions, targets = self.forward_pass(data)
+                batch_metrics = self.compute_batch_metrics(loss, predictions, targets)
+                for metric, value in batch_metrics.items():
+                    self.validation_metrics[metric] += value
 
-        avg_eer = total_loss / (batch_index + 1)
+        # Log average metrics
+        avg_validation_metrics = {metric: value / (batch_index + 1) for metric, value in self.validation_metrics.items()}
+        # Construct a log message with formatted metric values
+        avg_val_metrics_message = ", ".join([f"{metric.lower()} = {value:.3f}"
+                                             for metric, value in avg_validation_metrics.items()])
+        logger.info("Average Validation Metrics - Epoch %s: %s", self.epoch, avg_val_metrics_message)
+        # Log average metrics to wandb
         if self.use_wandb:
-            wandb.log(data={"avg_val_loss": avg_eer},
-                      step=self.steps)
-        self.last_validation_step = self.steps
-        logger.info(f"Average Validation Loss: {avg_eer:.3f}")
-        return avg_eer
+            avg_metrics_wandb = {"val_" + metric: value for metric, value in avg_validation_metrics.items()}
+            wandb.log({**avg_metrics_wandb, "epoch": self.epoch}, step=self.steps)
+        avg_val_score = avg_validation_metrics['loss']
+
+        return avg_val_score
 
 
 def setup_trainer(config, model, train_loader, val_loader, distributed):
