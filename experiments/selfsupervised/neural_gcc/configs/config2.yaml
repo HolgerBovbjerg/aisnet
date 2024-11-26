@@ -2,7 +2,7 @@ defaults:
     - model: large
     - data: default
     - augment: default
-    - loss: cross_entropy
+    - loss: mse
     - optimizer: adamw
     - scheduler: cosine_annealing
     - training: default

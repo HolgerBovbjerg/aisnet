@@ -1,0 +1,39 @@
+defaults:
+    - model: stft_power_phase_lstm
+    - data: default
+    - augment: default
+    - loss: mse
+    - optimizer: adamw
+    - scheduler: cosine_annealing_warmup_restart
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - _self_
+
+experiment_type: "selfsupervised.neural_gcc"
+exp_dir: ./runs/neural_gcc
+exp_name: neural_gcc_test
+start_stage: 2
+stop_stage: 100
+data_path: /home/es.aau.dk/jg96xg/Data
+
+
+model:
+    encoder_embedding_dim: 32
+job:
+    validation_interval: 1
+    log_interval: 1
+    num_workers: 4
+    device:
+        name: cpu
+        backend: null
+training:
+    gradient_accumulation_steps: 2
+data:
+    train:
+        max_token_count: 160000
+    validation:
+        max_token_count: 160000
+    test:
+        max_token_count: 160000

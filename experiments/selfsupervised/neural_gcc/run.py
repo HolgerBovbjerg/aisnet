@@ -13,7 +13,7 @@ from .data_preparation import prepare_data
 from .data_loading import setup_dataloader
 from .model import build_model
 from .trainer import setup_trainer
-from .evaluator import ExampleEvaluator
+from .evaluator import setup_evaluator
 
 
 logger = getLogger(__name__)
@@ -63,6 +63,23 @@ def model_training(config, distributed: bool = False):
         # Cleanup: Releases distributed training resources after completion.
         distributed_cleanup()
 
+def model_evaluation(config, distributed: bool = False):
+    if distributed:
+        # Setup: Initializes the distributed environment.
+        distributed_setup(backend=config.job.device.backend)
+
+    logger.info("Setting up evaluator.")
+    evaluator = setup_evaluator(config, distributed=distributed)
+    logger.info("Starting model testing.")
+    if distributed:
+        dist.barrier()
+    evaluator.evaluate()
+    logger.info("Finished testing.")
+
+    if distributed:
+        # Cleanup: Releases distributed training resources after completion.
+        distributed_cleanup()
+
 
 def run(config, distributed: bool = False):
 
@@ -87,8 +104,13 @@ def run(config, distributed: bool = False):
             stage += 1
         if stage == 2:
             logger.info("Stage {}: Evaluating trained model".format(stage))
-            evaluator = ExampleEvaluator(config)
-            evaluator.evaluate()
+            if distributed:
+                logger.info("Launching distributed testing job.")
+                world_size = int(os.environ['WORLD_SIZE'])
+                mp.spawn(model_training, args=(config, distributed), nprocs=world_size, join=True)
+            else:
+                logger.info("Launching local testing job.")
+                model_evaluation(config)
             logger.info("All stages finished.")
             break
 

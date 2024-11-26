@@ -66,7 +66,7 @@ class BaseTrainer:
         if self.gradient_accumulation_steps > 1:
             logger.info('Using %s gradient accumulation steps. Effective batch size will be %s times larger.',
                         self.gradient_accumulation_steps, self.gradient_accumulation_steps)
-        self.use_cuda_amp = config.training.use_cuda_amp # whether Autmotaic Mixed Precision is used
+        self.use_cuda_amp = config.training.use_cuda_amp # whether Automatic Mixed Precision is used
         if self.use_cuda_amp:
             if torch.cuda.is_available():
                 self.scaler = torch.amp.GradScaler(device="cuda")

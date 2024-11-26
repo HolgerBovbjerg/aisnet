@@ -4,9 +4,7 @@ import torch
 import wandb
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
-from torch.nn import functional as F
 
-from source.metrics import equal_error_rate, accuracy
 from source.trainer import BaseTrainer
 
 logger = logging.getLogger(__name__)
@@ -50,7 +48,7 @@ class NeuralGCCTrainer(BaseTrainer):
         predictions, targets, lengths = self.model(input_data, lengths=lengths, target=targets)
 
         # Compute loss
-        loss = self.criterion(predictions, targets)
+        loss = self.criterion(predictions, targets) / lengths.sum()
         return loss, predictions, targets
 
     # Define custom function to compute metrics. Should always return a dict with 'metric_name: value' key/value pairs.
@@ -77,7 +75,7 @@ class NeuralGCCTrainer(BaseTrainer):
                 loss, predictions, targets = self.forward_pass(data)
                 batch_metrics = self.compute_batch_metrics(loss, predictions, targets)
                 for metric, value in batch_metrics.items():
-                    self.validation_metrics[metric] += value
+                    self.validation_metrics[metric] += value.item()
 
         # Log average metrics
         avg_validation_metrics = {metric: value / (batch_index + 1) for metric, value in self.validation_metrics.items()}
