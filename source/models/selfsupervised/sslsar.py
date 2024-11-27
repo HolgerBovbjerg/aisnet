@@ -85,8 +85,8 @@ class SSLSAR(nn.Module):
         spatial_mask = torch.concat([mask, mask], dim=1)
         spectral_mask = spatial_mask.clone()
         spectral_mask[:, 1] = ~spectral_mask[:, 1]
-        x_spatial[spatial_mask] = self.spatial_mask_embedding
-        x_spectral[spectral_mask] = self.spectral_mask_embedding
+        x_spatial[spatial_mask] = self.spatial_mask_embedding.to(x_spatial.dtype)
+        x_spectral[spectral_mask] = self.spectral_mask_embedding.to(x_spatial.dtype)
 
         # Stack features for each channel if features are computed channel-wise
         x_spectral = x_spectral.transpose(1, 2)
