@@ -1,0 +1,12 @@
+defaults:
+    - feature_extractor: stft
+    - mask_generator: default
+    - spatial_encoder: lstm
+    - spectral_encoder: lstm
+n_feature_channels: 2
+feature_dim: 514
+feature_projection: True
+feature_dropout: 0.1
+spatial_encoder_embedding_dim: 512
+spectral_encoder_embedding_dim: 512
+sample_rate: 16000

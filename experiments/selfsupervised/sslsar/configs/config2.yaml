@@ -1,0 +1,20 @@
+defaults:
+    - model: large
+    - data: default
+    - augment: default
+    - loss: mse
+    - optimizer: adamw
+    - scheduler: cosine_annealing
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - _self_
+
+experiment_type: "selfsupervised.sslsar"
+exp_dir: ./runs/sslsar
+exp_name: sslsar
+start_stage: 0
+stop_stage: 100
+data_path: /home/es.aau.dk/jg96xg/Data/
+
