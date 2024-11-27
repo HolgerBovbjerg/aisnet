@@ -11,4 +11,4 @@ load_from: raw
 clean_and_noisy: True
 segment_max_size: null
 min_length: 8000
-hrtf_folder: "/Users/JG96XG/Desktop/data_sets/HRTFs/ARI/ari_splits/val/"
+hrtf_folder: ${data_path}/HRTFs/ARI/ari_splits/val/
