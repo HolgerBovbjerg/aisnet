@@ -45,10 +45,10 @@ class SSLSAR(nn.Module):
         self.spectral_encoder = spectral_encoder
         self.spatial_encoder = spatial_encoder
         self.mask_generator = mask_generator
-        self.spectral_mask_embedding = self.mask_emb = nn.Parameter(
+        self.spectral_mask_embedding = nn.Parameter(
             torch.FloatTensor(self.spectral_encoder_embedding_dim).uniform_()
         )
-        self.spatial_mask_embedding = self.mask_emb = nn.Parameter(
+        self.spatial_mask_embedding = nn.Parameter(
             torch.FloatTensor(self.spatial_encoder_embedding_dim).uniform_()
         )
         self.decoder = decoder if decoder is not None \
