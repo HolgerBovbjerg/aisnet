@@ -86,7 +86,7 @@ class NeuralGCCTrainer(BaseTrainer):
             avg_metrics_wandb = {"val_" + metric: value for metric, value in avg_validation_metrics.items()}
             wandb.log({**avg_metrics_wandb, "epoch": self.epoch}, step=self.steps)
         avg_val_score = avg_validation_metrics['loss']
-
+        self.model.train()
         return avg_val_score
 
 
