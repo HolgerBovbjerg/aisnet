@@ -66,6 +66,8 @@ class NeuralGCCTrainer(BaseTrainer):
             return None
         logger.info("Evaluating model on validation set...")
 
+        # Reset validation metrics
+        self.validation_metrics = {metric: 0.0 for metric in self.validation_metrics.keys()}
         self.model.eval()
         with torch.no_grad():
             batch_index = 0
