@@ -98,7 +98,10 @@ class NeuralGCCEvaluator:
 
     def _build_test_loader(self, config):
         logger.info("Creating test data augmentor.")
-        augmentor = get_augmentor(config)
+        if config.augment:
+            augmentor = get_augmentor(config)
+        else:
+            augmentor = None
         logger.info("Creating test datasets...")
         logger.info(f"Data Config: {OmegaConf.to_object(config.data)}")
         test_config = config.data.train

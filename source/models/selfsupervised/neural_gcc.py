@@ -45,19 +45,24 @@ class NeuralGCC(nn.Module):
                            kernel_size=1, stride=1)
 
     def forward(self, x: torch.Tensor, lengths: torch.Tensor, target: Optional[torch.Tensor] = None,
-                time_shift: int = 3, extract_features: bool = False):
+                time_shift: int = 0, extract_features: bool = False):
         # Initial length of input
         init_length = x.size(-1)
 
+        # Create GCC target
         if target is None:
             target = self.gcc(x)
         else:
-            # Create GCC target
             target = self.gcc(target)
-        target = target[..., time_shift:]
 
-        # Extract input and target features
+        # Extract input features
         x = self.feature_extractor(x)
+
+        # Compute new lengths after feature extraction
+        extra = init_length % x.size(-2)
+        if extra > 0:
+            lengths = lengths - extra
+        lengths = lengths // (init_length // x.size(-2))
 
         # Stack features for each channel if features are computed channel-wise
         if len(x.size()) == 4:
@@ -67,15 +72,11 @@ class NeuralGCC(nn.Module):
         # Project features to input size of encoder if feature_projection was specified in module creation, else no-op.
         x = self.feature_projection(x)
 
-        # Compute new lengths after feature extraction
-        extra = init_length % x.size(-2)
-        if extra > 0:
-            lengths = lengths - extra
-        lengths = lengths // (init_length // x.size(-2))
-
         # Create time shifted input and target
-        x = x[:, :-time_shift]
-        lengths = lengths - time_shift
+        if time_shift:
+            target = target[..., time_shift:]
+            x = x[:, :-time_shift]
+            lengths = lengths - time_shift
 
         # Encode features
         x, hidden = self.encoder(x, lengths)

@@ -41,8 +41,6 @@ class NeuralGCCTrainer(BaseTrainer):
         input_data, lengths = (input_data.to(self.device), lengths.to(self.device))
         if targets is not None:
             targets = targets.to(self.device)
-        else:
-            targets = input_data.detach().clone()
 
         # Make prediction
         predictions, targets, lengths = self.model(input_data, lengths=lengths, target=targets)

@@ -14,10 +14,10 @@ defaults:
 experiment_type: "selfsupervised.neural_gcc"
 exp_dir: ./runs/neural_gcc
 exp_name: neural_gcc_test
-start_stage: 2
+start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data
-
+augment: null
 
 model:
     encoder_embedding_dim: 32
@@ -33,7 +33,11 @@ training:
 data:
     train:
         max_token_count: 160000
+        buffer_size: 100
     validation:
         max_token_count: 160000
+        buffer_size: 100
     test:
         max_token_count: 160000
+        buffer_size: 100
+    collate_fn: pad_collate

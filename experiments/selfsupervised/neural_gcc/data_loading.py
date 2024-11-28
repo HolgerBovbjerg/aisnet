@@ -1,7 +1,5 @@
-import copy
 from logging import getLogger
-from typing import Optional, Callable
-from functools import partial
+from typing import Optional
 import os
 
 from omegaconf import OmegaConf
@@ -61,8 +59,10 @@ def get_data_loader(dataset, batch_size: int = 1, num_workers: int = 0, shuffle=
 
 def setup_dataloader(config, distributed=False):
     logger.info("Creating data augmentor.")
-    augmentor = get_augmentor(config)
-
+    if config.augment:
+        augmentor = get_augmentor(config)
+    else:
+        augmentor = None
     # Create datapipe and dataloaders
     logger.info("Creating datasets...")
     logger.info(f"Data Config: {OmegaConf.to_object(config.data)}")
@@ -85,13 +85,24 @@ def setup_dataloader(config, distributed=False):
 
     logger.info("Creating dataloaders...")
     num_workers = int(os.environ["SLURM_CPUS_PER_TASK"] if distributed else config.job.num_workers)
+
+    collate_fns = {
+        "pad_collate_clean_noisy": pad_collate_clean_noisy,
+        "pad_collate": pad_collate,
+    }
+    try:
+        collate_fn = collate_fns[config.data.collate_fn]
+    except KeyError as e:
+        logger.error("collate_fn with name '%s' does not exist", config.data.collate_fn)
+        raise KeyError from e
+
     train_loader = get_data_loader(train_dataset, batch_size=config.training.batch_size, shuffle=True,
                                    sampler=train_sampler, pin_memory=config.job.pin_memory,
-                                   collate_fn=pad_collate_clean_noisy,
+                                   collate_fn=collate_fn,
                                    num_workers=num_workers)
     validation_loader = get_data_loader(validation_dataset, batch_size=config.training.batch_size,
                                         shuffle=False, sampler=validation_sampler,
                                         pin_memory=config.job.pin_memory,
-                                        collate_fn=pad_collate_clean_noisy,
+                                        collate_fn=collate_fn,
                                         num_workers=num_workers)
     return train_loader, validation_loader

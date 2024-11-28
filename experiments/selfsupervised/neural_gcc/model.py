@@ -70,7 +70,7 @@ class Model(nn.Module):
     def forward(self, x: torch.Tensor,
                 lengths: torch.Tensor,
                 target: Optional[torch.Tensor] = None,
-                time_shift: int = 3):
+                time_shift: int = 0):
         return self.model(x, lengths, target, time_shift)
 
 def build_model(config):

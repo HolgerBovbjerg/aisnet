@@ -2,3 +2,5 @@ defaults:
   - train: librispeech_train_100h
   - validation: librispeech_dev_clean
   - test: librispeech_test_clean
+
+collate_fn: pad_collate_clean_noisy
