@@ -308,7 +308,7 @@ class BaseTrainer:
 
             # Validate model
             if (self.validation_interval
-                    and ((self.steps % self.validation_interval) == 0)
+                    and ((self.batch_steps % self.validation_interval) == 0)
                     and (self.steps != self.last_validation_step)
                     and (self.rank == 0)):
                 self.validate()
