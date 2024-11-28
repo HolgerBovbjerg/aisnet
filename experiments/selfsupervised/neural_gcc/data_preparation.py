@@ -98,7 +98,9 @@ def download_librispeech_split(librispeech_root, split):
         logger.info("Downloading LibriSpeech {}".format(split))
         try:
             Path(librispeech_root).mkdir(exist_ok=True, parents=True)
-            LIBRISPEECH(root=librispeech_root, url=split, folder_in_archive="", download=True)
+            data_root = Path(librispeech_root).parent
+            LIBRISPEECH(root=data_root, url=split, folder_in_archive="LibriSpeech", download=True)
+
         except Exception as e:
             logger.error("Failed to download LibriSpeech {}: {}".format(split, e))
     elif Path(path).is_dir():
