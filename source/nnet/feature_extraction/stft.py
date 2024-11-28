@@ -54,6 +54,7 @@ class STFT(nn.Module):
             "power": self._power,
             "log_power_phase": self._log_power_phase,
             "log_power": self._log_power,
+            "real_imag": self._real_imag,
         }
 
         if output_type not in postprocessing_func_map:
@@ -79,6 +80,10 @@ class STFT(nn.Module):
     @staticmethod
     def _phase(stft_output):
         return torch.angle(stft_output)
+
+    @staticmethod
+    def _real_imag(stft_output):
+        return torch.cat((stft_output.real, stft_output.imag), dim=-1)
 
     def _power_phase(self, stft_output):
         power = self._power(stft_output)
