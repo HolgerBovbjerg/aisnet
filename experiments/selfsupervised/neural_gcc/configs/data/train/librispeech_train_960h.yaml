@@ -8,7 +8,7 @@ data_sets:
 sampling_rate: 16000
 load_from_tar: False
 buffer_size: 10000
-max_token_count: 480000
+max_token_count: 2400000
 load_from: raw
 clean_and_noisy: True
 segment_max_size: null
