@@ -26,7 +26,7 @@ def pad_collate(batch):
     waveforms = [(waveform - waveform.mean()) / (waveform.std() + 1.e-9)
                  for waveform in waveforms]  # Instance norm
 
-    lengths = torch.tensor([waveform.size(-1) for waveform in waveforms])
+    lengths = torch.tensor([waveform.size(0) for waveform in waveforms])
 
     waveforms_padded = pad_sequence(waveforms, batch_first=True, padding_value=0).transpose(-1, -2)
 
