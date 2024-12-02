@@ -1,2 +1,13 @@
 name: "conformer"
 config:
+    input_dim: ${model.encoder_embedding_dim}
+    ffn_dim: ${eval:'${model.encoder.config.num_heads} * ${model.encoder_embedding_dim}'}
+    num_heads: 8
+    num_layers: 3
+    depthwise_conv_kernel_size: 31
+    dropout: 0.
+    use_group_norm: False
+    convolution_first: False
+    left_context: 0
+    right_context: 0
+    causal: False

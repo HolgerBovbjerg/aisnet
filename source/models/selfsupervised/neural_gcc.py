@@ -79,7 +79,7 @@ class NeuralGCC(nn.Module):
             lengths = lengths - time_shift
 
         # Encode features
-        x, hidden = self.encoder(x, lengths)
+        x, _ = self.encoder(x, lengths)
 
         # If only features are needed return them
         if extract_features:

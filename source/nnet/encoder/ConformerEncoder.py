@@ -7,6 +7,8 @@ from torch import nn
 import torch.nn.functional as F
 from speechbrain.nnet.attention import MultiheadAttention
 
+from source.nnet.utils.padding import lengths_to_padding_mask
+
 
 class RelPosMHAXL(nn.Module):
     """ This class implements the relative multihead implementation similar to that in Transformer XL
@@ -652,7 +654,8 @@ class ConformerEncoder(nn.Module):
             ]
         )
 
-    def forward(self, x, padding_mask, output_hidden_states=False, output_attentions=False):
+    def forward(self, x, lengths, output_hidden_states=False, output_attentions=False):
+        padding_mask = lengths_to_padding_mask(lengths)
         pos_embs = self.positional_encoder(x)
         hidden_states = []
         attentions = []
@@ -660,7 +663,7 @@ class ConformerEncoder(nn.Module):
             x, attention = layer(x, padding_mask, pos_embs)
             hidden_states.append(x)
             attentions.append(attention)
-        output = (x,)
+        output = (x, lengths)
         if output_hidden_states:
             output += (hidden_states,)
         if output_attentions:
