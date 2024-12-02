@@ -10,4 +10,4 @@ config:
     convolution_first: False
     left_context: null
     right_context: null
-    causal: False
+    causal: True
