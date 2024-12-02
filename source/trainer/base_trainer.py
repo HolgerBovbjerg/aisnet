@@ -69,6 +69,7 @@ class BaseTrainer:
         self.use_cuda_amp = config.training.use_cuda_amp # whether Automatic Mixed Precision is used
         if self.use_cuda_amp:
             if torch.cuda.is_available():
+                logger.info("Training using CUDA AMP.")
                 self.scaler = torch.amp.GradScaler(device="cuda")
             else:
                 logger.info("'use_cuda_amp is set to True but CUDA is not available. Reverting to training without AMP.")
