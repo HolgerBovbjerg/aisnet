@@ -5,11 +5,10 @@ import torch
 import wandb
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
-import torch.nn.functional as F
 import numpy as np
 
 from source.trainer import BaseTrainer
-from source.nnet.utils.padding import lengths_to_padding_mask
+from source.nnet.utils.masking import lengths_to_padding_mask
 from source.metrics import angular_error, threshold_accuracy, angular_precision
 from source.utils.spatial import spherical_to_cartesian
 
@@ -57,10 +56,11 @@ class DoATrainer(BaseTrainer):
         predictions, lengths = self.model(input_data, lengths=lengths)
 
         # Compute loss
-        targets = targets.unsqueeze(1).repeat(1, predictions.size(1)) # Repeat target DoA for each time step
+        targets = targets.unsqueeze(1).repeat(1, predictions.size(1)) # Repeat target DoA for each time step (assuming static source)
         padding_mask = lengths_to_padding_mask(lengths)
-        targets[padding_mask] = -1
-        loss = self.criterion(predictions.transpose(1, 2), targets)
+        predictions = predictions[~padding_mask]
+        targets = targets[~padding_mask]
+        loss = self.criterion(predictions, targets)
         return loss, predictions, targets
 
     # Define custom function to compute metrics. Should always return a dict with 'metric_name: value' key/value pairs.
