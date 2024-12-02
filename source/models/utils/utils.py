@@ -104,10 +104,10 @@ def print_module_structure(module, indent=0):
     """
     indent_space = "  " * indent
     module_info = get_layer_info(module)
-    print(f"{indent_space}{module.__class__.__name__}{module_info}:")
+    logger.info(f"{indent_space}{module.__class__.__name__}{module_info}:")
 
     for name, child in module.named_children():
-        print(f"{indent_space}  ({name}):")
+        logger.info(f"{indent_space}  ({name}):")
         print_module_structure(child, indent + 2)
 
     # If no children, display this module's parameters if available
@@ -115,7 +115,7 @@ def print_module_structure(module, indent=0):
         params = list(module.parameters())
         if params:
             param_shapes = [tuple(p.size()) for p in params]
-            print(f"{indent_space}  Parameters: {param_shapes}")
+            logger.info(f"{indent_space}  Parameters: {param_shapes}")
 
 
 def summarize_model(module):
@@ -139,12 +139,12 @@ def summarize_model(module):
         if param.requires_grad:
             trainable_params += num_params
 
-    print("\nModel summary:")
-    print(f"    Class Name: {module.__class__.__name__}")
-    print(f"    Total Number of model parameters: {format_num(total_params)}")
-    print(f"    Number of trainable parameters: {format_num(trainable_params)} ({(trainable_params / total_params) * 100:.1f}%)")
-    print(f"    Size: {param_size / (1024 ** 2):.1f} MB")
-    print(f"    Type: {next(module.parameters()).dtype}")
+    logger.info("Model summary:")
+    logger.info(f"    Class Name: {module.__class__.__name__}")
+    logger.info(f"    Total Number of model parameters: {format_num(total_params)}")
+    logger.info(f"    Number of trainable parameters: {format_num(trainable_params)} ({(trainable_params / total_params) * 100:.1f}%)")
+    logger.info(f"    Size: {param_size / (1024 ** 2):.1f} MB")
+    logger.info(f"    Type: {next(module.parameters()).dtype}")
 
 
 def load_partial_checkpoints(model, partial_checkpoints: dict):
