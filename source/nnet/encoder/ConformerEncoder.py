@@ -7,7 +7,7 @@ from torch import nn
 import torch.nn.functional as F
 from speechbrain.nnet.attention import MultiheadAttention
 
-from source.nnet.utils.padding import lengths_to_padding_mask
+from source.nnet.utils.masking import lengths_to_padding_mask, generate_attention_mask
 
 
 class RelPosMHAXL(nn.Module):
@@ -341,15 +341,6 @@ class RelPosEncXL(nn.Module):
             return pe
 
 
-def _generate_attention_mask(size: tuple, left_context: int, right_context: Optional[int] = None, device: str = None) -> torch.Tensor:
-    if right_context is None:
-        right_context = 0
-    mask = ~torch.triu(torch.tril(torch.ones(size=size, device=device),
-                                  diagonal=right_context),
-                                  diagonal=-left_context).bool()
-    return mask
-
-
 class Conv2dSubSampling(nn.Module):
     """
     Convolutional 2D subsampling (to 1/4 length)
@@ -414,12 +405,13 @@ class _ConvolutionModule(torch.nn.Module):
         self.layer_norm = torch.nn.LayerNorm(input_dim)
         self.pointwise_conv1 = torch.nn.Conv1d(input_dim, 2 * num_channels, 1, stride=1, padding=0, bias=bias)
         self.glu = torch.nn.GLU(dim=1)
+        self.padding = (depthwise_kernel_size - 1) if causal_convolution else (depthwise_kernel_size - 1) // 2
         self.depthwise_conv = torch.nn.Conv1d(
             in_channels=num_channels,
             out_channels=num_channels,
             kernel_size=depthwise_kernel_size,
             stride=1,
-            padding=(depthwise_kernel_size - 1) if causal_convolution else (depthwise_kernel_size - 1) // 2,
+            padding=self.padding,
             groups=num_channels,
             bias=bias)
         self.norm = torch.nn.GroupNorm(num_groups=1, num_channels=num_channels) if use_group_norm \
@@ -442,7 +434,7 @@ class _ConvolutionModule(torch.nn.Module):
         x = self.glu(x)
         x = self.depthwise_conv(x)
         if self.causal_convolution:
-            x = x[..., :(-1 * self.depthwise_conv.padding[0])]
+            x = x[..., :(-1 * self.padding)]
         x = self.norm(x)
         x = self.silu(x)
         x = self.pointwise_conv2(x)
@@ -518,14 +510,25 @@ class ConformerLayer(torch.nn.Module):
             attention_type: str = "RelPosMHAXL"
     ) -> None:
         super().__init__()
+        # Validate inputs
+        if left_context is not None and left_context < 0:
+            raise ValueError("left_context must be 0 or positive if not None.")
+        if right_context is not None and right_context < 0:
+            raise ValueError("right_context must be 0 or positive if not None.")
+        if causal and (right_context is not None and right_context > 0):
+            raise ValueError("If causal is True, right_context must be 0 or None.")
         self.causal = causal
         self.left_context = left_context
-        self.right_context = right_context
+        # Set right_context
+        if causal:
+            self.right_context = 0  # No right context if causal
+        else:
+            self.right_context = right_context
         self.ffn1 = _FeedForwardModule(input_dim, ffn_dim, dropout=dropout)
         self.self_attn_layer_norm = torch.nn.LayerNorm(input_dim)
         self.attention_type = attention_type
         if attention_type == "RegularMHA":
-            self.self_attn = MultiheadAttention(d_model=input_dim, nhead=num_attention_heads, dropout=dropout)
+            self.self_attn = nn.MultiheadAttention(embed_dim=input_dim, num_heads=num_attention_heads, dropout=dropout)
         elif attention_type == "RelPosMHAXL":
             self.self_attn = RelPosMHAXL(embed_dim=input_dim, num_heads=num_attention_heads, dropout=dropout,
                                          mask_pos_future=causal)
@@ -580,9 +583,10 @@ class ConformerLayer(torch.nn.Module):
 
         attn_mask = None
         if self.left_context or self.right_context:
-            attn_mask = _generate_attention_mask(size=(x.size(1), x.size(1)),
+            attn_mask = generate_attention_mask(size=(x.size(1), x.size(1)),
                                                  left_context=self.left_context,
-                                                 right_context=self.right_context, device=x.device)
+                                                 right_context=self.right_context,
+                                                 device=x.device)
         x, self_attention = self.self_attn(
             query=x,
             key=x,
@@ -615,8 +619,8 @@ class ConformerEncoderConfig:
     dropout: float = 0.
     use_group_norm: bool = False
     convolution_first: bool = False
-    left_context: Optional[int] = 0
-    right_context: Optional[int] = 0
+    left_context: Optional[int] = None
+    right_context: Optional[int] = None
     causal: bool = False
 
 
@@ -630,8 +634,8 @@ class ConformerEncoder(nn.Module):
                  dropout: float = 0.,
                  use_group_norm: bool = False,
                  convolution_first: bool = False,
-                 left_context: Optional[int] = 0,
-                 right_context: Optional[int] = 0,
+                 left_context: Optional[int] = None,
+                 right_context: Optional[int] = None,
                  causal: bool = False):
         super().__init__()
         self.positional_encoder = RelPosEncXL(emb_dim=input_dim)
@@ -661,8 +665,11 @@ class ConformerEncoder(nn.Module):
         attentions = []
         for layer in self.conformer_layers:
             x, attention = layer(x, padding_mask, pos_embs)
-            hidden_states.append(x)
-            attentions.append(attention)
+            # Store intermediate results if specified
+            if output_hidden_states:
+                hidden_states.append(x)
+            if output_attentions:
+                attentions.append(attention)
         output = (x, lengths)
         if output_hidden_states:
             output += (hidden_states,)

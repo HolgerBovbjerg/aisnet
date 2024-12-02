@@ -1,1 +1,1 @@
-from .masking import MaskGeneratorConfig, MaskGenerator
+from .masking import MaskGeneratorConfig, MaskGenerator, generate_attention_mask, lengths_to_padding_mask, padding_mask_to_lengths

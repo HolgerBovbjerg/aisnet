@@ -7,7 +7,16 @@ from torch import nn
 
 
 def lengths_to_padding_mask(lengths: torch.Tensor) -> torch.Tensor:
-    batch_size = lengths.shape[0]
+    """
+    Converts lengths into a padding mask tensor.
+
+    Args:
+        lengths (torch.Tensor): A 1D tensor of shape (batch_size,) containing the lengths for each sequence.
+
+    Returns:
+        torch.Tensor: A 2D boolean tensor of shape (batch_size, max_length) where `True` indicates padding positions.
+    """
+    batch_size = lengths.size(0)
     max_length = int(torch.max(lengths).item())
     padding_mask = torch.arange(max_length, device=lengths.device, dtype=lengths.dtype).expand(
         batch_size, max_length
@@ -16,7 +25,50 @@ def lengths_to_padding_mask(lengths: torch.Tensor) -> torch.Tensor:
 
 
 def padding_mask_to_lengths(padding_mask: torch.Tensor) -> torch.Tensor:
-    return padding_mask.size(1) - padding_mask.sum(dim=1)
+    """
+    Converts a padding mask back to lengths.
+
+    Args:
+        padding_mask (torch.Tensor): A 2D boolean tensor of shape (batch_size, max_length)
+                                     where `True` indicates padding positions.
+
+    Returns:
+        torch.Tensor: A 1D tensor of shape (batch_size,) containing the lengths for each sequence.
+    """
+    # Calculate the lengths by summing the non-padding positions (where padding_mask is False)
+    lengths = (~padding_mask).sum(dim=1)
+    return lengths
+
+
+def generate_attention_mask(size: tuple, left_context: int, right_context: Optional[int] = None, device: str = None) -> torch.Tensor:
+    """
+    Generates an attention mask tensor based on the specified left and right context sizes.
+
+    The attention mask is a binary mask where:
+    - `True` values indicate positions that should be masked (i.e., not attended to).
+    - `False` values indicate positions that should not be masked (i.e., should be attended to).
+
+    The mask is created by considering both left and right context around each position.
+    If `right_context` is not provided, it is set to the length of the input (first element of `size`).
+    If `left_context` is not provided, it is set to the length of the input as well.
+
+    Args:
+        size (tuple): A tuple of two integers (length, length), specifying the size of the square attention mask.
+        left_context (int): The number of positions to the left of the current position that should be attended to.
+        right_context (Optional[int], optional): The number of positions to the right of the current position that should be attended to. If not provided, defaults to `size[0]`.
+        device (str, optional): The device on which to create the tensor (e.g., 'cpu' or 'cuda'). Defaults to `None`.
+
+    Returns:
+        torch.Tensor: A binary attention mask of shape `size`, with `True` values indicating positions that should be masked, and `False` values indicating positions that should not be masked.
+    """
+    if right_context is None:
+        right_context = size[0]
+    if left_context is None:
+        left_context = size[0]
+    mask = ~torch.triu(torch.tril(torch.ones(size=size, device=device),
+                                  diagonal=right_context),
+            diagonal=-left_context).bool()
+    return mask
 
 
 def compute_mask_indices(

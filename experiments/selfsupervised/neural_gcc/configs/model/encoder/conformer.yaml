@@ -8,6 +8,6 @@ config:
     dropout: 0.
     use_group_norm: False
     convolution_first: False
-    left_context: 0
-    right_context: 0
+    left_context: null
+    right_context: null
     causal: False

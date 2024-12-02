@@ -1,5 +1,5 @@
 defaults:
-    - model: stft_power_phase_lstm
+    - model: stft_power_phase_conformer
     - data: default
     - augment: default
     - loss: mse
@@ -18,7 +18,6 @@ start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data
 augment: null
-
 model:
     encoder_embedding_dim: 32
 job:
