@@ -1,8 +1,8 @@
 defaults:
     - feature_extractor: stft
     - mask_generator: default
-    - spatial_encoder: lstm
-    - spectral_encoder: lstm
+    - spatial_encoder: conformer
+    - spectral_encoder: conformer
 n_feature_channels: 2
 feature_dim: 514
 feature_projection: True

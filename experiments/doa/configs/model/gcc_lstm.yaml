@@ -15,8 +15,5 @@ feature_channels: 1
 feature_projection: True
 feature_dropout: 0.1
 feature_dropout_first: False
-encoder_embedding_dim: 64
+encoder_embedding_dim: 256
 sample_rate: 16000
-encoder:
-  config:
-    num_layers: 2  # Override num_layers for the lstm encoder
