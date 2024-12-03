@@ -1,0 +1,18 @@
+defaults:
+    - feature_extractor: hubert
+
+num_channels: 2
+microphone_array:
+    - [0., 0.09, 0.]
+    - [0., -0.09, 0.]
+elevation_resolution: 5.
+azimuth_resolution: 5.
+elevation_range: [90., 90.]
+azimuth_range: [-90., 90.]
+feature_dim: 768
+feature_channels: 2
+feature_projection: True
+feature_dropout: 0.1
+feature_dropout_first: False
+embedding_dim: 256
+sample_rate: 16000

@@ -1,0 +1,7 @@
+name: pretrained
+config:
+    model_name: hubert  # Name of the S3PRL upstream model
+    freeze_model: True  # Whether to freeze upstream model parameters
+    extra_config: null  # Additional configuration for the upstream model
+    layer_selection: null  # Layers to use for feature extraction
+    normalizer: True  # Whether to normalize the extracted features
