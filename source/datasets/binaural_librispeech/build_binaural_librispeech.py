@@ -36,7 +36,7 @@ def process(data, sampling_rate, elevation_resolution, elevation_range, azimuth_
 
     source_direction = (1., elevation, azimuth)  # Left, horizontal plane
     source_direction_cart = spherical_to_cartesian(*source_direction)
-    left_signal, right_signal, receiver_position = hrtf_simulator(waveform,
+    left_signal, right_signal, receiver_position = hrtf_simulator(waveform.view(1, 1, -1),
                                                                   source_direction=source_direction_cart)
     stereo = torch.cat((left_signal, right_signal), dim=0).squeeze()
     stereo = stereo / (torch.max(torch.abs(stereo)) + 1.e-9)
@@ -63,7 +63,7 @@ def process(data, sampling_rate, elevation_resolution, elevation_range, azimuth_
 
 if __name__ == "__main__":
     # LibriSpeech dataset
-    splits = ["train-clean-100"]  # ["dev-clean", "test-clean", "dev-other", "test-other"]
+    splits = ["train-clean-100", "dev-clean", "test-clean", "dev-other", "test-other"]
     root = "/Users/JG96XG/Desktop/data_sets/"
 
     sampling_rate = 16000
