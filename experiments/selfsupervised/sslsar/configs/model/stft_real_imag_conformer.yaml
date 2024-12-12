@@ -1,5 +1,5 @@
 defaults:
-    - feature_extractor: stft_real_imag
+    - feature_extractor: stft
     - mask_generator: default
     - spatial_encoder: conformer
     - spectral_encoder: conformer
