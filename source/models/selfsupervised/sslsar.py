@@ -50,7 +50,7 @@ class SSLSAR(nn.Module):
             torch.FloatTensor(self.feature_dim).uniform_()
         )
         self.decoder = decoder if decoder is not None \
-            else nn.Conv1d(in_channels=self.spectral_encoder_embedding_dim + self.spectral_encoder_embedding_dim,
+            else nn.Conv1d(in_channels=self.spatial_encoder_embedding_dim + self.spectral_encoder_embedding_dim,
                            out_channels=self.feature_dim * n_feature_channels,
                            kernel_size=1, stride=1)
 
