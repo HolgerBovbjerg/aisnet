@@ -4,5 +4,5 @@ data_sets:
         metadata_filename: metadata.csv
         subset: horizontal_plane_front_only
         splits: 
-         - test-clean
+         - dev-clean
 batch_size: 64

@@ -9,21 +9,25 @@ defaults:
     - job: default
     - wandb: default
     - hydra: default
+    - evaluation: default
     - _self_
 
 exp_dir: ./runs
-exp_name: doa_experiment
+exp_name: doa_experiment_test
 experiment_type: "doa"
-start_stage: 0
+start_stage: 2
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data/
+force_restart: False
+
 job:
     num_workers: 4
     device:
         name: cpu
         backend: null
 training:
-    gradient_accumulation_steps: 16
+    gradient_accumulation_steps: 2
+    num_epochs: 1
 data:
     train:
         batch_size: 4

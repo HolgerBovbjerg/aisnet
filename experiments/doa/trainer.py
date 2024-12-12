@@ -1,5 +1,4 @@
 import logging
-from itertools import product
 
 import torch
 import wandb
@@ -9,7 +8,7 @@ import numpy as np
 
 from source.trainer import BaseTrainer
 from source.nnet.utils.masking import lengths_to_padding_mask
-from source.metrics import angular_error, threshold_accuracy, angular_precision
+from source.metrics import angular_error, threshold_accuracy
 from source.utils.spatial import spherical_to_cartesian
 
 

@@ -9,6 +9,7 @@ defaults:
     - job: default
     - wandb: default
     - hydra: default
+    - evaluation: default
     - _self_
 
 exp_dir: ./runs

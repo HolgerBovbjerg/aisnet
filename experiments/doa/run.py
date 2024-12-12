@@ -13,6 +13,7 @@ from .data_preparation import prepare_data
 from .data_loading import setup_dataloader
 from .model import build_model
 from .trainer import setup_trainer
+from .evaluator import setup_evaluator
 
 logger = getLogger(__name__)
 
@@ -84,7 +85,8 @@ def run(config, distributed: bool = False):
             stage += 1
         if stage == 2:
             logger.info("Stage {}: Evaluating trained model".format(stage))
-
+            evaluator = setup_evaluator(config, distributed=distributed)
+            evaluator.evaluate()
             logger.info("All stages finished.")
             break
 

@@ -1,0 +1,18 @@
+noise:
+    babble:
+       path: ${data_path}/noise_files/kolbaek_noise_files/bbl/
+    bus:
+        path: ${data_path}/noise_files/kolbaek_noise_files/bus/
+    cafe:
+        path: ${data_path}/noise_files/kolbaek_noise_files/caf/
+    mix:
+        path: ${data_path}/noise_files/kolbaek_noise_files/mix/
+    pedestrian:
+        path: ${data_path}/noise_files/kolbaek_noise_files/ped/
+    speech_shaped_noise:
+        path: ${data_path}/noise_files/kolbaek_noise_files/ssn/
+    street:
+        path: ${data_path}/noise_files/kolbaek_noise_files/str/
+snr_db_min: -5
+snr_db_max: 20
+snr_db_step: 5

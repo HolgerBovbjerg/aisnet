@@ -162,7 +162,7 @@ class BaseTrainer:
                        name=config.wandb.name,
                        group=config.wandb.group,
                        job_type=config.wandb.job_type,
-                       tags=config.wandb.tags)
+                       tags=config.wandb.tags + ["train"] if config.wandb.tags else ["train"])
                        #resume=config.wandb.resume)
                        #id=self.wandb_id)
             wandb.config.update(OmegaConf.to_container(config, resolve=True, throw_on_missing=True))
@@ -260,6 +260,8 @@ class BaseTrainer:
         Takes a single optimizer and scheduler step
         :return: None
         """
+        if self.distributed:
+            dist.barrier()
         if self.use_cuda_amp:
             self.scaler.step(self.optimizer)  # Update weights
             self.scaler.update()  # Update scaler for next step
@@ -271,6 +273,8 @@ class BaseTrainer:
         self.optimizer.zero_grad()
         self.steps += 1
         self.batch_steps += 1
+        if self.distributed:
+            dist.barrier()
 
     def train_one_epoch(self) -> None:
         """
