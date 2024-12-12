@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     try:
         dataset = load_from_disk(os.path.join(args.output_dir, args.subset))
-    except:
+    except FileNotFoundError:
         main_folder_path = args.main_folder_path
         csv_folder_path = args.csv_folder_path if args.csv_folder_path is not None \
             else os.path.join(main_folder_path, args.subset)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         csv_dict = {}
         for split in splits:
             metadata_path = os.path.join(main_folder_path, args.subset, split, "metadata.csv")
-            df = pd.read_csv(metadata_path, index_col="file_name")
+            df = pd.read_csv(str(metadata_path), index_col="file_name")
 
             split = split.replace("-", "_")
             df["split"] = split
@@ -83,11 +83,14 @@ if __name__ == "__main__":
 
         print("Embed table storage")
 
-        # load_dataset(...)
-        format = dataset["test_clean"].format
+        # Get dataset format
+        dataset_format = dataset["test_clean"].format
+        # Change format to arrow
         dataset = dataset.with_format("arrow")
+        # Embed external data into a Pyarrow table's storage
         dataset = dataset.map(embed_table_storage, batched=True, num_proc=args.cpu_num_workers)
-        dataset = dataset.with_format(**format)
+        # Change back format
+        dataset = dataset.with_format(**dataset_format)
 
         dataset.save_to_disk(os.path.join(args.output_dir, args.subset), num_proc=args.cpu_num_workers)
 
