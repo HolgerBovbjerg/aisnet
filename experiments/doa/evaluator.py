@@ -44,7 +44,7 @@ class DoAEvaluator:
             self.local_rank = self.rank - gpus_per_node * (self.rank // gpus_per_node)
         else:
             self.rank = 0
-        self.seed = config.training.seed
+        self.seed = config.evaluation.seed
         seed_everything(self.seed)
         self.device = self.local_rank if self.distributed else get_device(config.job.device.name)
         if torch.cuda.is_available() and distributed:
@@ -62,8 +62,8 @@ class DoAEvaluator:
             # Distributes model across GPUs using DistributedDataParallel.
             self.model = DistributedDataParallel(self.model, device_ids=[self.device])
 
-        self.test_score_dir = os.path.join(str(self.save_dir), "test_scores")
-        os.makedirs(self.test_score_dir, exist_ok=True)
+        self.evaluation_dir = os.path.join(str(self.save_dir), "test_scores")
+        os.makedirs(self.evaluation_dir, exist_ok=True)
 
         # Evaluation metrics
         # Set up the loss
@@ -72,10 +72,11 @@ class DoAEvaluator:
         self.criterion = get_loss(**loss_config)
         # Setup metrics
         self.metrics_to_log = ["loss", "mean_angular_error", "std_angular_error", "accuracy@10degree", "median_angular_error"]
+        self.metrics_df = pd.DataFrame()
 
         # Evaluation settings
         self.noise_types = OmegaConf.to_object(config.evaluation.noise)
-        self.snr_range = np.arange(config.evaluation.snr_db_min, config.evaluation.snr_db_max, config.evaluation.snr_db_step)
+        self.snr_range = config.evaluation.snrs
 
         # Generate all combinations of azimuth and elevation and create label map
         elevation_grid, azimuth_grid = torch.meshgrid(self.model.elevation_angles, self.model.azimuth_angles, indexing="xy")
@@ -99,10 +100,6 @@ class DoAEvaluator:
             # resume=config.wandb.resume)
             # id=self.wandb_id)
             wandb.config.update(OmegaConf.to_container(config, resolve=True, throw_on_missing=True))
-            if config.wandb.watch_model:
-                wandb.watch(models=self.model,
-                            log=config.wandb.watch_model_log,
-                            log_freq=config.wandb.watch_model_log_frequency)
 
     def _load_model(self):
         print("Loading model from checkpoint...")
@@ -191,42 +188,52 @@ class DoAEvaluator:
             batch_metrics = self.compute_batch_metrics(loss, predictions, targets)
             for metric, value in batch_metrics.items():
                 accumulated_metrics[metric] += value.item()
-                accumulated_steps += 1
+            accumulated_steps += 1
 
+        # Compute average metrics
         avg_metrics = {}
         for metric, value in accumulated_metrics.items():
             avg_metrics[metric] = value / accumulated_steps
 
+        # Save and log metrics
         avg_test_metrics_message = ", ".join([f"{metric.lower()} = {value:.3f}"
                                               for metric, value in avg_metrics.items()])
         logger.info("Average Test Metrics: %s", avg_test_metrics_message)
-        wandb.log(data=avg_metrics)
-        # WANDB logging
 
-        # Save and log metrics
-        logger.info("Saving test results in .csv.")
-        avg_metrics = {metric: [value] for metric, value in accumulated_metrics.items()}
+        avg_metrics = {metric: [value] for metric, value in avg_metrics.items()}
         avg_metrics["snr_db"] = snr
         avg_metrics["noise_type"] = noise_type
+
+        # Update metrics
         metrics_df = pd.DataFrame.from_dict(avg_metrics)
-        test_setting = f"{noise_type}_{snr}_dB"
-        metrics_df.to_csv(os.path.join(str(self.test_score_dir), f"test_metrics_{test_setting}.csv"), index=False)
+        self.metrics_df = pd.concat([self.metrics_df, metrics_df], ignore_index=True)
+
+        # Log to W&B dynamically
+        if self.use_wandb:
+            metrics_table = wandb.Table(dataframe=self.metrics_df)
+            wandb.log({"test_metrics": metrics_table})
+
+        # Save the DataFrame to a CSV dynamically
+        logger.info("Saving test results in %s", os.path.join(self.evaluation_dir, "test_metrics.csv"))
+        self.metrics_df.to_csv(os.path.join(self.evaluation_dir, "test_metrics.csv"), index=False)
+
 
     def evaluate(self):
         logger.info("Starting model evaluation:")
         logger.info(f"Data Config: {OmegaConf.to_object(self.config.data)}")
         n_evaluation_settings = len(list(self.noise_types.keys())) + 1
         noise_types = list(self.noise_types.keys())
-        logger.info(f"Evaluating model on clean data and noise types: {noise_types} at SNRs: {self.snr_range.tolist()}")
+        logger.info(f"Evaluating model on clean data and noise types: {noise_types} at SNRs: {self.snr_range}")
 
         for i in range(n_evaluation_settings):
-            seed_everything(self.seed)
             if i == 0:
+                seed_everything(self.seed)
                 logger.info("Evaluating on clean data")
                 test_loader = self._build_test_loader(self.config, augmentor=identity)
                 self._evaluate(test_loader, noise_type="clean", snr=np.inf)
             else:
                 for snr in self.snr_range:
+                    seed_everything(self.seed)
                     path = self.noise_types[noise_types[i]]["path"]
                     logger.info("Evaluating noise type: %s at SNR = %s dB", noise_types[i-1], snr)
                     augment_config = {"noise_paths": [path], "sampling_rate": 16000, "snr_db_min": snr, "snr_db_max": snr, "p": 1.}

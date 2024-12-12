@@ -13,6 +13,5 @@ noise:
         path: ${data_path}/noise_files/kolbaek_noise_files/ssn/
     street:
         path: ${data_path}/noise_files/kolbaek_noise_files/str/
-snr_db_min: -5
-snr_db_max: 20
-snr_db_step: 5
+snrs: [-5, 0, 5, 10, 15, 20]
+seed: 0
