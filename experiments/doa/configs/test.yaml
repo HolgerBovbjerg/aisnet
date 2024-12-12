@@ -15,7 +15,7 @@ defaults:
 exp_dir: ./runs
 exp_name: doa_experiment_test
 experiment_type: "doa"
-start_stage: 2
+start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data/
 force_restart: False
