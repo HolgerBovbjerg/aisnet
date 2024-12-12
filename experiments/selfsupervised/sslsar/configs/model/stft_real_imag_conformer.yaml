@@ -1,0 +1,15 @@
+defaults:
+    - feature_extractor: stft_real_imag
+    - mask_generator: default
+    - spatial_encoder: conformer
+    - spectral_encoder: conformer
+n_feature_channels: 2
+feature_dim: 514
+feature_projection: True
+feature_dropout: 0.1
+spatial_encoder_embedding_dim: 256
+spectral_encoder_embedding_dim: 512
+sample_rate: 16000
+feature_extractor:
+    config:
+        output_type: real_imag

@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 from source.nnet.modules.input_projection import InputProjection
+from source.nnet.utils.masking import lengths_to_padding_mask
 
 
 class SSLSAR(nn.Module):
@@ -32,12 +33,12 @@ class SSLSAR(nn.Module):
         self.spectral_encoder_embedding_dim = spectral_encoder_embedding_dim
         self.spatial_encoder_embedding_dim = spatial_encoder_embedding_dim
         self.n_feature_channels = n_feature_channels
-        self.spectral_feature_projection = InputProjection(self.feature_dim,
+        self.spectral_feature_projection = InputProjection(2*self.feature_dim,
                                                   self.spectral_encoder_embedding_dim,
                                                   dropout_rate=feature_dropout,
                                                   dropout_first=feature_dropout_first) \
             if feature_projection else nn.Identity()
-        self.spatial_feature_projection = InputProjection(self.feature_dim,
+        self.spatial_feature_projection = InputProjection(2*self.feature_dim,
                                                            self.spatial_encoder_embedding_dim,
                                                            dropout_rate=feature_dropout,
                                                            dropout_first=feature_dropout_first) \
@@ -45,14 +46,11 @@ class SSLSAR(nn.Module):
         self.spectral_encoder = spectral_encoder
         self.spatial_encoder = spatial_encoder
         self.mask_generator = mask_generator
-        self.spectral_mask_embedding = nn.Parameter(
-            torch.FloatTensor(self.spectral_encoder_embedding_dim).uniform_()
-        )
-        self.spatial_mask_embedding = nn.Parameter(
-            torch.FloatTensor(self.spatial_encoder_embedding_dim).uniform_()
+        self.mask_embedding = nn.Parameter(
+            torch.FloatTensor(self.feature_dim).uniform_()
         )
         self.decoder = decoder if decoder is not None \
-            else nn.Conv1d(in_channels=2*self.spectral_encoder_embedding_dim + 2*self.spectral_encoder_embedding_dim,
+            else nn.Conv1d(in_channels=self.spectral_encoder_embedding_dim + self.spectral_encoder_embedding_dim,
                            out_channels=self.feature_dim * n_feature_channels,
                            kernel_size=1, stride=1)
 
@@ -65,7 +63,7 @@ class SSLSAR(nn.Module):
         if target is None:
             target = x.clone().detach()
         else:
-            # Create GCC target
+            # Create target
             target = self.feature_extractor(target)
 
         # Compute new lengths after feature extraction
@@ -77,16 +75,24 @@ class SSLSAR(nn.Module):
         # Project features to input size of encoder if feature_projection was specified in module creation, else no-op.
         x_spatial = x
         x_spectral = x.clone()
-        x_spectral = self.spectral_feature_projection(x_spectral)
-        x_spatial = self.spatial_feature_projection(x_spatial)
 
         # Masking
         mask = self.mask_generator.generate_mask(x_spatial[:, 0], lengths).unsqueeze(1)
         spatial_mask = torch.concat([mask, mask], dim=1)
+        # Clone spatial mask
         spectral_mask = spatial_mask.clone()
-        spectral_mask[:, 1] = ~spectral_mask[:, 1]
-        x_spatial[spatial_mask] = self.spatial_mask_embedding.to(x_spatial.dtype)
-        x_spectral[spectral_mask] = self.spectral_mask_embedding.to(x_spatial.dtype)
+        # Randomly choose whether to invert channel 0 or channel 1
+        invert_channel_0 = torch.rand(spectral_mask.size(0), device=spectral_mask.device) > 0.5
+        # Random mask inversion
+        spectral_mask[invert_channel_0, 0] = ~spectral_mask[invert_channel_0, 0]
+        spectral_mask[~invert_channel_0, 1] = ~spectral_mask[~invert_channel_0, 1]
+        # Ensure padding is not masked
+        padding_mask = lengths_to_padding_mask(lengths).unsqueeze(1).repeat(1, 2, 1)
+        spatial_mask[padding_mask] = False
+        spectral_mask[padding_mask] = False
+        # Apply mask
+        x_spatial[spatial_mask] = self.mask_embedding.to(x_spatial.dtype)
+        x_spectral[spectral_mask] = self.mask_embedding.to(x_spectral.dtype)
 
         # Stack features for each channel if features are computed channel-wise
         x_spectral = x_spectral.transpose(1, 2)
@@ -94,9 +100,13 @@ class SSLSAR(nn.Module):
         x_spatial = x_spatial.transpose(1, 2)
         x_spatial = x_spatial.reshape(x_spatial.size(0), x_spatial.size(1), -1)
 
+        # Project features to encoder input size
+        x_spectral = self.spectral_feature_projection(x_spectral)
+        x_spatial = self.spatial_feature_projection(x_spatial)
+
         # Encode features
         x_spectral, _ = self.spectral_encoder(x_spectral, lengths)
-        x_spatial, _ = self.spectral_encoder(x_spatial, lengths)
+        x_spatial, _ = self.spatial_encoder(x_spatial, lengths)
 
         # Concatenate spectral and spatial features
         x = torch.concat([x_spectral, x_spatial], dim=-1)

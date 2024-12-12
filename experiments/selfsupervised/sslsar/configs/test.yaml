@@ -1,5 +1,5 @@
 defaults:
-    - model: stft_power_phase_lstm
+    - model: stft_power_phase_conformer
     - data: default
     - augment: default
     - loss: mse
@@ -17,6 +17,7 @@ exp_name: sslsar_test
 start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data
+force_restart: True
 
 model:
     spatial_encoder_embedding_dim: 32
@@ -33,7 +34,10 @@ training:
 data:
     train:
         max_token_count: 160000
+        buffer_size: 50
     validation:
         max_token_count: 160000
+        buffer_size: 50
     test:
         max_token_count: 160000
+        buffer_size: 50
