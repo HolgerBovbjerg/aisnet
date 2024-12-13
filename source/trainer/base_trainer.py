@@ -218,7 +218,7 @@ class BaseTrainer:
             # Log metrics to Weights & Biases if enabled
             if self.use_wandb:
                 # Combine metrics into a dictionary with additional batch-specific information
-                wandb_data = {f"train/{metric}": avg_metrics[metric] for metric in avg_metrics}
+                wandb_data = {f"train_{metric}": avg_metrics[metric] for metric in avg_metrics}
                 wandb_data.update({
                     "train_batch_time": self.batch_time,
                     "train_data_load_time": self.data_load_time,
@@ -337,7 +337,7 @@ class BaseTrainer:
         logger.info(f"Average Training Metrics - Epoch {self.epoch}: {avg_epoch_metrics_message}")
         # Log average metrics to wandb
         if self.use_wandb:
-            avg_metrics_wandb = {"train/" + metric: value for metric, value in avg_epoch_metrics.items()}
+            avg_metrics_wandb = {"train_" + metric: value for metric, value in avg_epoch_metrics.items()}
             wandb.log({**avg_metrics_wandb, "epoch": self.epoch}, step=self.steps)
 
     def train(self) -> None:
@@ -553,7 +553,7 @@ class BaseTrainer:
 
         avg_loss = total_loss / (batch_index + 1)
         if self.use_wandb:
-            wandb.log(data={"validation/loss": avg_loss},
+            wandb.log(data={"validation_loss": avg_loss},
                       step=self.steps)
         self.last_validation_step = self.steps
         logger.info(f"Average Validation Loss: {avg_loss:.3f}")
