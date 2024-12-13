@@ -234,8 +234,9 @@ class DoAEvaluator:
             else:
                 for snr in self.snr_range:
                     seed_everything(self.seed)
-                    path = self.noise_types[noise_types[i]]["path"]
-                    logger.info("Evaluating noise type: %s at SNR = %s dB", noise_types[i-1], snr)
+                    noise_type = noise_types[i-1]
+                    path = self.noise_types[noise_type]["path"]
+                    logger.info("Evaluating noise type: %s at SNR = %s dB", noise_type, snr)
                     augment_config = {"noise_paths": [path], "sampling_rate": 16000, "snr_db_min": snr, "snr_db_max": snr, "p": 1.}
                     augmentor = AddNoise(**augment_config)
                     test_loader = self._build_test_loader(self.config, augmentor=augmentor)
