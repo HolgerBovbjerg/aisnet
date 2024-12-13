@@ -116,7 +116,7 @@ class DoATrainer(BaseTrainer):
         logger.info("Average Validation Metrics - Epoch %s: %s", self.epoch, avg_val_metrics_message)
         # Log average metrics to wandb
         if self.use_wandb:
-            avg_metrics_wandb = {"val_" + metric: value for metric, value in avg_validation_metrics.items()}
+            avg_metrics_wandb = {"validation/" + metric: value for metric, value in avg_validation_metrics.items()}
             wandb.log({**avg_metrics_wandb, "epoch": self.epoch}, step=self.steps)
         avg_val_score = avg_validation_metrics['loss']
 
