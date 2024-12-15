@@ -166,13 +166,14 @@ class NeuralGCCEvaluator:
 
         avg_metrics = {}
         for metric, value in accumulated_metrics.items():
-            avg_metrics[metric] = [value / accumulated_steps]
+            avg_metrics[metric] = value / accumulated_steps
 
         avg_test_metrics_message = ", ".join([f"{metric.lower()} = {value:.3f}"
                                              for metric, value in avg_metrics.items()])
         logger.info("Average Test Metrics: %s", avg_test_metrics_message)
 
         # Save and log metrics
+        avg_metrics = {metric: [value] for metric, value in avg_metrics.items()}
         metrics_df = pd.DataFrame.from_dict(avg_metrics)
         metrics_df.to_csv(os.path.join(str(self.save_dir), "test_metrics.csv"), index=False)
 
