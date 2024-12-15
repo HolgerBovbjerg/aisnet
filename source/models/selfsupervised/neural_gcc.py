@@ -91,7 +91,7 @@ class NeuralGCC(nn.Module):
         x = self.decoder(x.transpose(-1, -2))
 
         if self.normalize_target:
-            target = F.instance_norm(target.transpose(1, 2)).transpose(1, 2)
+            target = F.instance_norm(target)
 
         return x, target, lengths
 
