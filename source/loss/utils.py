@@ -1,8 +1,8 @@
-import torch
 from torch import nn
 
 from .weighted_pairwise import WeightedPairwiseLoss
 from .vicreg_loss import VICRegLoss
+from .kl_div_loss import KLDivLoss
 
 
 def get_loss(name: str, **kwargs):
@@ -12,7 +12,8 @@ def get_loss(name: str, **kwargs):
         "l1": nn.L1Loss,
         "smooth_l1": nn.SmoothL1Loss,
         "MSE": nn.MSELoss,
-        "VICReg": VICRegLoss
+        "VICReg": VICRegLoss,
+        "kl_divergence": KLDivLoss,
     }
 
     if name in loss_classes:
