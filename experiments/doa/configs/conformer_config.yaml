@@ -1,5 +1,5 @@
 defaults:
-    - model: stft_power_phase_lstm
+    - model: stft_power_phase_conformer
     - data: default
     - augment: default
     - loss: cross_entropy
@@ -19,3 +19,14 @@ start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data/
 force_restart: False
+
+data:
+    train:
+        batch_size: 16
+    validation:
+        batch_size: 16
+    test:
+        batch_size: 16
+
+training:
+    gradient_accumulation_steps: 4
