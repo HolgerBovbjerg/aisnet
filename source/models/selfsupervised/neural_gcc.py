@@ -4,6 +4,7 @@ from dataclasses import asdict
 
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 from source.nnet.feature_extraction import GCC, GCCConfig
 from source.nnet.modules.input_projection import InputProjection
@@ -25,7 +26,8 @@ class NeuralGCC(nn.Module):
                  feature_dropout: float = 0.,
                  feature_dropout_first: bool = False,
                  decoder: Optional[nn.Module] = None,
-                 n_feature_channels: Optional[int] = 2):
+                 n_feature_channels: Optional[int] = 2,
+                 normalize_target: bool = True):
         super().__init__()
         self.feature_extractor = feature_extractor
         self.feature_dim = feature_dim
@@ -43,6 +45,7 @@ class NeuralGCC(nn.Module):
             else nn.Conv1d(in_channels=encoder_embedding_dim,
                            out_channels=self.gcc_dim,
                            kernel_size=1, stride=1)
+        self.normalize_target = normalize_target
 
     def forward(self, x: torch.Tensor, lengths: torch.Tensor, target: Optional[torch.Tensor] = None,
                 time_shift: int = 0, extract_features: bool = False):
@@ -86,6 +89,9 @@ class NeuralGCC(nn.Module):
             return x
         # Else put encoded features through post_network to predict target
         x = self.decoder(x.transpose(-1, -2))
+
+        if self.normalize_target:
+            target = F.instance_norm(target.transpose(1, 2)).transpose(1, 2)
 
         return x, target, lengths
 

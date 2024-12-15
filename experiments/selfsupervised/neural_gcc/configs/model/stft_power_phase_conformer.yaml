@@ -14,3 +14,4 @@ gcc_config:
     n_fft: 512
     window_length: 400
     hop_length: 160
+normalize_target: True

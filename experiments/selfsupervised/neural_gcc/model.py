@@ -30,6 +30,7 @@ class ModelConfig:
     encoder: Optional[Union[EncoderConfig, dict]] = None
     gcc_config: Optional[Union[GCCConfig, dict]] = None
     sample_rate: int = 16000
+    normalize_target: bool = True
 
     def __post_init__(self):
         if isinstance(self.encoder, (dict, DictConfig)):
@@ -65,7 +66,8 @@ class Model(nn.Module):
                                feature_projection=cfg.feature_projection,
                                feature_dropout_first=cfg.feature_dropout_first,
                                feature_dropout=cfg.feature_dropout,
-                               n_feature_channels=cfg.n_feature_channels)
+                               n_feature_channels=cfg.n_feature_channels,
+                               normalize_target=cfg.normalize_target,)
 
     def forward(self, x: torch.Tensor,
                 lengths: torch.Tensor,
