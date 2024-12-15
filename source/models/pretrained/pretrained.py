@@ -8,8 +8,8 @@ from s3prl.nn import S3PRLUpstream, Featurizer
 from source.models.utils import freeze_model_parameters
 
 
-def get_s3prl_upstream_model(model_name: str, freeze_model: bool = True, extra_config: Optional[dict] = None) -> S3PRLUpstream:
-    model = S3PRLUpstream(model_name, extra_conf=extra_config)
+def get_s3prl_upstream_model(model_name: str, freeze_model: bool = True, extra_config: Optional[dict] = None, refresh: bool = False) -> S3PRLUpstream:
+    model = S3PRLUpstream(model_name, extra_conf=extra_config, refresh=refresh)
     if freeze_model:
         freeze_model_parameters(model)
     return model
@@ -27,6 +27,7 @@ class S3PRLFeaturizerConfig:
     extra_config: Optional[Dict] = None  # Additional configuration for the upstream model
     layer_selection: Optional[List[int]] = None  # Layers to use for feature extraction
     normalizer: bool = True  # Whether to normalize the extracted features
+    refresh: bool = False # Whether to force re-download of model even if a version already exist
 
 
 class S3PRLFeaturizer(nn.Module):
@@ -36,7 +37,8 @@ class S3PRLFeaturizer(nn.Module):
         freeze_model: bool = True,
         extra_config: Optional[Dict] = None,
         layer_selection: Optional[List[int]] = None,
-        normalizer: bool = True
+        normalizer: bool = True,
+        refresh: bool = False
     ):
         """
         Wrapper module to combine an S3PRL upstream model and a featurizer.
@@ -53,7 +55,8 @@ class S3PRLFeaturizer(nn.Module):
         self.model = get_s3prl_upstream_model(
             model_name=model_name,
             freeze_model=freeze_model,
-            extra_config=extra_config
+            extra_config=extra_config,
+            refresh=refresh
         )
         if self.freeze_model:
            self.model.eval()
