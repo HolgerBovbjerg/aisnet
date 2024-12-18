@@ -395,7 +395,7 @@ class FeatureExtractorConfig:
 
 def initialize_feature_extractor(config: FeatureExtractorConfig):
     if config.type.lower() == "logmel":
-        return LogMelFeatureExtractor(**config.config)
+        return LogMel(**config.config)
     elif config.type.lower() == "cnn":
         return CNNFeatureExtractor(**config.config)
     else:

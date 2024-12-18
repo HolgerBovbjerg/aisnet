@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .stft import STFT
+from stft import STFT
 
 
 def add_noise_to_waveform(waveforms: torch.Tensor, snr_db: float) -> torch.Tensor:
@@ -40,7 +40,6 @@ def add_noise_to_waveform(waveforms: torch.Tensor, snr_db: float) -> torch.Tenso
 def apply_phase_transform(cps: torch.Tensor) -> torch.Tensor:
     # Compute the magnitude of the cross power spectrum
     magnitude = torch.abs(cps)
-
     # Phase transform
     return cps / (magnitude + 1.e-8)
 
@@ -116,9 +115,11 @@ class GCC(nn.Module):
         return output
 
     def estimate_delay(self, r: List[torch.Tensor]):
+        if len(r.size()) == 3:
+            r = [r]
         delays = []
         for i, gcc in enumerate(r):
-            delays.append(self.delays[i][torch.argmax(gcc, dim=0)])
+            delays.append(self.delays[i][torch.argmax(gcc, dim=1)])
         return delays
 
     def estimate_tdoa(self, r: List[torch.Tensor]):
@@ -169,8 +170,8 @@ if __name__ == "__main__":
     resolution = torch.arcsin(torch.tensor(c_sound * (1 / sample_rate) / dist_mics)) * (180. / torch.pi)
 
     # Instantiate the GCC-PHAT module
-    gcc_phat = GCCPHAT(n_fft=512, window_length=401, hop_length=160, sample_rate=sample_rate, center=True,
-                       max_delay=t_max_samples, n_mics=microphone_positions.shape[0])
+    gcc_phat = GCC(n_fft=512, window_length=401, hop_length=160, sample_rate=sample_rate, center=True,
+                       max_delay=t_max_samples, n_mics=microphone_positions.shape[0], phase_transform=True)
 
     # Compute the time delay using GCC-PHAT
     r = gcc_phat(input_tensor)
@@ -179,13 +180,13 @@ if __name__ == "__main__":
     doa = estimate_doa(tdoa=tdoa[0], dist_mics=dist_mics[0], c_sound=c_sound)
     lowpass_kernel_size = 11
     doa_lowpass = \
-        F.avg_pool1d(doa, kernel_size=lowpass_kernel_size, stride=1, padding=lowpass_kernel_size // 2)[0]
+        F.avg_pool1d(doa.view(1, 1, -1), kernel_size=lowpass_kernel_size, stride=1, padding=lowpass_kernel_size // 2)[0]
     doa_real = estimate_doa(tdoa=torch.tensor(delay_time_true), dist_mics=dist_mics[0], c_sound=c_sound)
     from matplotlib import pyplot as plt
 
     fig, ax = plt.subplots(2, 1)
     delay_range = torch.tensor([-t_max_samples[0], t_max_samples[0]]) * resolution[0]
-    ax[0].imshow(r[0][0].T, extent=(0, doa.size(-1), delay_range[0], delay_range[1]), aspect='auto')
+    ax[0].imshow(r[0], extent=(0, doa.size(-1), delay_range[0], delay_range[1]), aspect='auto')
     ax[1].plot(doa[0], label='raw estimate')
     ax[1].plot(doa_lowpass[0], label='lowpass estimate')
     ax[1].plot(doa_real * torch.ones(doa.size(-1)), label='real', linewidth=2)
