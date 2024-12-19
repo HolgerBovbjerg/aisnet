@@ -1,0 +1,21 @@
+defaults:
+    - model: gcc_argmax
+    - data: default
+    - augment: default
+    - loss: cross_entropy
+    - optimizer: adamw
+    - scheduler: cosine_annealing_warmup_restart
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - evaluation: default
+    - _self_
+
+exp_dir: ./runs
+exp_name: doa_experiment
+experiment_type: "doa"
+start_stage: 0
+stop_stage: 100
+data_path: /home/es.aau.dk/jg96xg/Data/
+force_restart: False
