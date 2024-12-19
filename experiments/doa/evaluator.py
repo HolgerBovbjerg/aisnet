@@ -103,10 +103,14 @@ class DoAEvaluator:
             wandb.config.update(OmegaConf.to_container(config, resolve=True, throw_on_missing=True))
 
     def _load_model(self):
-        print("Loading model from checkpoint...")
         model = build_model(self.config)
         checkpoint_path = os.path.join(self.save_dir, "best_model.pth")
-        checkpoint = torch.load(checkpoint_path, weights_only=True)
+        try:
+            print("Loading model from checkpoint...")
+            checkpoint = torch.load(checkpoint_path, weights_only=True)
+        except FileNotFoundError:
+            logger.info("Model checkpoint not found, evaluating model initialized from scratch.")
+            return model
         if self.distributed:
             model.module.load_state_dict(checkpoint)
         else:
