@@ -49,6 +49,7 @@ def download_binaural_librispeech_split(root: str, subset: str, split: str):
         for file in files:
             if file.endswith(".tar.gz"):
                 tar_file_path = os.path.join(tar_root, file)
+                logger.info("Extracting %s...", tar_file_path)
                 # Extract the tar file
                 shutil.unpack_archive(tar_file_path, target_dir)
                 # Delete the tar file after extraction
