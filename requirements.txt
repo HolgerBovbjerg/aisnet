@@ -18,10 +18,12 @@ speechbrain
 torch
 torch_audiomentations
 torchaudio
-torchdata
+torchvision
+torchdata==0.9.0
 tqdm
 transformers
 wandb
 webdataset
 xlstm
 omegaconf
+s3prl
