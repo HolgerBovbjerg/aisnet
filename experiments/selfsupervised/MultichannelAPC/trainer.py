@@ -4,9 +4,7 @@ import torch
 import wandb
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
-from torch.nn import functional as F
 
-from source.metrics import equal_error_rate, accuracy
 from source.trainer import BaseTrainer
 
 logger = logging.getLogger(__name__)
@@ -42,7 +40,7 @@ class MultiChannelAPCTrainer(BaseTrainer):
         # Transfer data to device
         input_data, lengths = (input_data.to(self.device), lengths.to(self.device))
         if targets is not None:
-            targets.to(self.device)
+            targets = targets.to(self.device)
         else:
             targets = input_data.detach().clone()
 
