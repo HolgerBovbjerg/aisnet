@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from stft import STFT
+from .stft import STFT
 
 
 def add_noise_to_waveform(waveforms: torch.Tensor, snr_db: float) -> torch.Tensor:
@@ -76,7 +76,7 @@ class GCC(nn.Module):
         self.window_type = window_type
         self.stft = STFT(n_fft=n_fft, hop_length=hop_length, window_length=window_length, sample_rate=sample_rate,
                          center=center, window_type=window_type)
-        self.max_delay = max_delay if max_delay is not None else [n_fft // 2 + 1]
+        self.max_delay = max_delay if max_delay is not None else torch.tensor([n_fft // 2 + 1])
         self.delays = [torch.arange(-delay, delay + 1, dtype=torch.int) for delay in self.max_delay]
         self.n_mics = n_mics
         self.mic_indices_i, self.mic_indices_j = torch.triu_indices(self.n_mics, self.n_mics, offset=1)

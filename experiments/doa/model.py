@@ -11,6 +11,7 @@ from source.utils import count_parameters
 from source.nnet.feature_extraction import build_feature_extractor, FeatureExtractorConfig
 from source.nnet.encoder import build_encoder, EncoderConfig
 from source.models.pretrained import S3PRLFeaturizer, S3PRLFeaturizerConfig
+from source.models.doa.GCCDoA import GCCDoA
 from source.models.utils import load_partial_checkpoints
 from source.nnet.modules.input_projection import InputProjection
 
@@ -116,6 +117,83 @@ class DoaModel(nn.Module):
 
 
 @dataclass
+class DoaGCCModelConfig:
+    feature_extractor: dict
+    microphone_array: Tuple[List[float], ...] = ([0, -0.09, 0], [0, 0.09, 0])
+    elevation_resolution: float = 10.
+    azimuth_resolution: float = 5.
+    elevation_range: Tuple[float, float] = (90., 90.)
+    azimuth_range: Tuple[float, float] = (-90., 90.)
+    sample_rate: int = 16000
+    num_channels: int = 2
+
+
+class DoaGCCModel(nn.Module):
+    """
+    DoA model main module.
+    """
+
+    def __init__(self,
+                 cfg: DoaGCCModelConfig):
+        super().__init__()
+
+        self.azimuth_resolution = cfg.azimuth_resolution
+        self.elevation_resolution = cfg.elevation_resolution
+        self.elevation_range = cfg.elevation_range
+        self.azimuth_range = cfg.azimuth_range
+        self.num_channels = cfg.num_channels
+        self.microphone_array = list_to_tensor(cfg.microphone_array)
+        self.n_mics = len(self.microphone_array)
+        assert self.n_mics == self.num_channels, "Microphone array elements and channels should be the same"
+        self.sample_rate = cfg.sample_rate
+        self.gcc = GCCDoA(microphone_positions=self.microphone_array, **cfg.feature_extractor.config)
+        self.elevation_angles, self.azimuth_angles = self._get_elevation_and_azimuth_angles()
+        elevation_grid, azimuth_grid = torch.meshgrid(self.elevation_angles, self.azimuth_angles,
+                                                      indexing="xy")
+        self.angle_combinations = torch.stack([elevation_grid.flatten(), azimuth_grid.flatten()], dim=1)
+
+    def _get_elevation_and_azimuth_angles(self):
+        elevation_span = abs(self.elevation_range[1] - self.elevation_range[0])
+        num_directions_elevation = ceil(elevation_span / self.elevation_resolution) if elevation_span else 1
+        if elevation_span:
+            elevation_angles = torch.arange(num_directions_elevation) * self.elevation_resolution + \
+                               self.elevation_range[0]
+        else:
+            elevation_angles = torch.tensor([self.elevation_range[0]])
+        azimuth_span = abs(self.azimuth_range[1] - self.azimuth_range[0])
+        num_directions_azimuth = ceil(azimuth_span / self.azimuth_resolution) if azimuth_span else 1
+        if azimuth_span:
+            azimuth_angles = torch.arange(num_directions_azimuth) * self.azimuth_resolution + self.azimuth_range[0]
+        else:
+            azimuth_angles = torch.tensor([self.azimuth_range[0]])
+
+        return elevation_angles, azimuth_angles
+
+    def classifier(self, x):
+        # Here, the GCCDoA models output which is a single number representing the azimuth degree of the prediction
+        # is converted to a one_hot representation.
+        x = torch.stack([torch.ones_like(x) * 90., x], dim=-1)
+        diff = torch.sqrt(torch.sum(torch.abs(self.angle_combinations.T - x.unsqueeze(-1))**2, dim=2))
+        diff[diff > 180.] = 180. - diff[diff > 180.] % 180.
+        min_indices = torch.argmin(diff, dim=-1)
+        one_hot = torch.nn.functional.one_hot(min_indices, num_classes=self.angle_combinations.size(0)).to(x.dtype)
+        return one_hot
+
+    def forward(self, x, lengths=None):
+        init_length = x.size(-1)
+        x = self.gcc(x)
+
+        # Compute new lengths after feature extraction
+        extra = init_length % x.size(-1)
+        if extra > 0:
+            lengths = lengths - extra
+        lengths = lengths // (init_length // x.size(-1))
+
+        x = self.classifier(x)
+        return x, lengths
+
+
+@dataclass
 class DoaPretrainedModelConfig:
     feature_extractor: Union[S3PRLFeaturizerConfig, dict]
     microphone_array: Tuple[List[float], ...] = ([0, -0.09, 0], [0, 0.09, 0])
@@ -206,6 +284,12 @@ def build_model(config):
     if config.model.feature_extractor.name == "pretrained":
         model_config = DoaPretrainedModelConfig(**config.model)
         model = DoaPretrainedModel(model_config)
+    elif "encoder" not in config.model:
+        if config.model.feature_extractor.name == "gcc_argmax":
+            model_config = DoaGCCModelConfig(**config.model)
+            model = DoaGCCModel(model_config)
+        else:
+            raise ValueError("Model config error.")
     else:
         model_config = DoaModelConfig(**config.model)
         model = DoaModel(model_config)

@@ -162,9 +162,7 @@ class DoAEvaluator:
 
     def compute_batch_metrics(self, loss, predictions, targets):
         predicted_angle = predictions.argmax(dim=-1)
-        predicted_angle = predicted_angle[targets != -1]
         predicted_angle = self.angle_combinations[predicted_angle]
-        targets = targets[targets != -1]
         targets = self.angle_combinations[targets]
 
         predicted_angle = spherical_to_cartesian(torch.ones(predicted_angle.size(0), device=predicted_angle.device),

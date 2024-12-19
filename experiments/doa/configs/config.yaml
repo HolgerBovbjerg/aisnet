@@ -17,5 +17,6 @@ exp_name: doa_experiment
 experiment_type: "doa"
 start_stage: 0
 stop_stage: 100
+skip_training: True
 data_path: /home/es.aau.dk/jg96xg/Data/
 force_restart: False

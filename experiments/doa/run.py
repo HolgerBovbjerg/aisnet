@@ -66,25 +66,29 @@ def run(config, distributed: bool = False):
 
     start_stage = config.start_stage
     stop_stage = config.stop_stage
+    skip_training = config.skip_training
     stage = start_stage
 
     while stage <= stop_stage:
         if stage == 0:
-            logger.info("Stage {}: Data preparation:".format(stage))
+            logger.info("Stage %s: Data preparation:", stage)
             prepare_data(config)
             stage += 1
         if stage == 1:
-            logger.info("Stage {}: Model training".format(stage))
-            if distributed:
-                logger.info("Launching distributed training job.")
-                world_size = int(os.environ['WORLD_SIZE'])
-                mp.spawn(model_training, args=(config, distributed), nprocs=world_size, join=True)
+            if skip_training:
+                logger.info("Stage {}: Model Training: Skipping...".format(stage))
             else:
-                logger.info("Launching local job.")
-                model_training(config)
+                logger.info("Stage %s: Model training", stage)
+                if distributed:
+                    logger.info("Launching distributed training job.")
+                    world_size = int(os.environ['WORLD_SIZE'])
+                    mp.spawn(model_training, args=(config, distributed), nprocs=world_size, join=True)
+                else:
+                    logger.info("Launching local job.")
+                    model_training(config)
             stage += 1
         if stage == 2:
-            logger.info("Stage {}: Evaluating trained model".format(stage))
+            logger.info("Stage %s: Evaluating model", stage)
             evaluator = setup_evaluator(config, distributed=distributed)
             evaluator.evaluate()
             logger.info("All stages finished.")

@@ -1,3 +1,5 @@
+from math import ceil
+
 import torch
 from torch import nn
 
@@ -18,7 +20,7 @@ class GCCDoA(nn.Module):
     def __init__(self, n_fft: int, window_length: int, hop_length: int, sample_rate: int,
                  microphone_positions: torch.Tensor, center: bool = False,
                  window_type: str = "hann", c_sound=343.,
-                 limit_to_max_delay: bool = False):
+                 limit_to_max_delay: bool = False, phase_transform: bool = True):
         super().__init__()
         assert microphone_positions.size(0) == 2, ("microphone positions must have size of (2, 3), "
                                                    "only 2 channel arrays are supported")
@@ -32,7 +34,7 @@ class GCCDoA(nn.Module):
         self.max_delay = self.get_max_delay() if limit_to_max_delay else None
         self.gcc = GCC(n_fft=n_fft, window_length=window_length, hop_length=hop_length, sample_rate=sample_rate,
                        center=center, window_type=window_type, max_delay=self.max_delay, n_mics=self.n_mics,
-                       phase_transform=True)
+                       phase_transform=phase_transform)
 
     def get_mic_dists(self):
         # Compute pairwise distances between microphones
