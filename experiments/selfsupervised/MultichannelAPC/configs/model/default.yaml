@@ -1,6 +1,6 @@
 defaults:
     - encoder: lstm
-    - feature_extractor: GCC
+    - feature_extractor: gcc
 
 input_dim: 33
 output_dim: 33

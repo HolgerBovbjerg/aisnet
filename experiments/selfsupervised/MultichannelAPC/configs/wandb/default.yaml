@@ -6,6 +6,6 @@ group: ${exp_name} # Specify an experiment group to enabl organization individua
 job_type: null # Specify the type of run, e.g., "train".
 tags: null # A list of strings, which will populate the list of tags on this run in the UI.
 watch_model: True # Whether to log model parameters and gradients on wandb
-watch_model_log_frequency: 1 # Logs model every "step". Ignored if watch_model=False.
+watch_model_log_frequency: 1000 # Logs model every "step". Ignored if watch_model=False.
 watch_model_log: "all" # "gradients", "parameters", or "all". Ignored if watch_model=False.
 #resume: allow
