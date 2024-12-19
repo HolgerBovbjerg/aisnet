@@ -101,7 +101,7 @@ class SSLSAREvaluator:
         augmentor = get_augmentor(config)
         logger.info("Creating test datasets...")
         logger.info(f"Data Config: {OmegaConf.to_object(config.data)}")
-        test_config = config.data.train
+        test_config = config.data.test
         test_dataset= create_dataset(test_config, augmentor)
         if self.distributed:
             # Distributed Sampler: Ensures data is divided among GPUs using DistributedSampler.
