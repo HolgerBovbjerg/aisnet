@@ -61,6 +61,7 @@ class DoAEvaluator:
         if distributed:
             # Distributes model across GPUs using DistributedDataParallel.
             self.model = DistributedDataParallel(self.model, device_ids=[self.device])
+        self.model.eval()
 
         self.evaluation_dir = os.path.join(str(self.save_dir), "test_scores")
         os.makedirs(self.evaluation_dir, exist_ok=True)
