@@ -1,10 +1,9 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from logging import getLogger
+from typing import Union
 
-from omegaconf import OmegaConf
-import torch
+from omegaconf import OmegaConf, DictConfig
 from torch import nn
-
 
 from source.utils import count_parameters
 from source.nnet.feature_extraction import build_feature_extractor, FeatureExtractorConfig
@@ -17,15 +16,25 @@ logger = getLogger(__name__)
 
 @dataclass
 class ModelConfig:
+    feature_extractor: Union[FeatureExtractorConfig, dict]
+    encoder: Union[EncoderConfig, dict]
     input_dim: int = 40
     output_dim: int = 40
     feature_projection: bool = True
     feature_dropout: float = 0.
     encoder_embedding_dim: int = 512
-    feature_extractor: FeatureExtractorConfig = field(default_factory=FeatureExtractorConfig)
-    encoder: EncoderConfig = field(default_factory=EncoderConfig)
     sample_rate: int = 16000
-    n_channels: int = 2
+
+
+    def __post_init__(self):
+        if isinstance(self.encoder, (dict, DictConfig)):
+            self.encoder = EncoderConfig(**self.encoder)
+        elif not isinstance(self.encoder, EncoderConfig):
+            raise ValueError("Wrong input for 'encoder'.")
+        if isinstance(self.feature_extractor, (dict, DictConfig)):
+            self.feature_extractor = FeatureExtractorConfig(**self.feature_extractor)
+        elif not isinstance(self.feature_extractor, FeatureExtractorConfig):
+            raise ValueError("Wrong input for 'feature_extractor'.")
 
 
 class Model(nn.Module):
@@ -45,8 +54,7 @@ class Model(nn.Module):
                                      feature_dropout=cfg.feature_dropout,
                                      feature_projection=feature_projection,
                                      encoder=encoder,
-                                     encoder_embedding_dim=cfg.encoder_embedding_dim,
-                                     n_channels=cfg.n_channels)
+                                     encoder_embedding_dim=cfg.encoder_embedding_dim)
 
     def forward(self, x, lengths, target):
         prediction, target, lengths = self.model(x, lengths=lengths, target=target)
