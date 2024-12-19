@@ -18,7 +18,6 @@ class MultichannelAPC(nn.Module):
                  feature_projection: nn.Module = nn.Identity(),
                  feature_dropout: float = 0.,
                  decoder: Optional[nn.Module] = None,
-                 n_channels: Optional[int] = None,
                  output_dim: Optional[int] = None):
         super().__init__()
         self.feature_extractor = feature_extractor
