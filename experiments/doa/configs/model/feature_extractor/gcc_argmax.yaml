@@ -1,0 +1,10 @@
+name: gcc_argmax
+config:
+    n_fft: 512
+    window_length: 400
+    hop_length: 160
+    sample_rate: 16000
+    center: True
+    window_type: hann
+    limit_to_max_delay: True
+    phase_transform: True
