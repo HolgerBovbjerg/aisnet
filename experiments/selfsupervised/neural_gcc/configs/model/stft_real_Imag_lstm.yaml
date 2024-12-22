@@ -1,0 +1,19 @@
+defaults:
+    - feature_extractor: stft
+    - encoder: lstm
+feature_extractor:
+    output_type: real_imag
+n_feature_channels: 2
+feature_dim: 514
+feature_projection: True
+feature_dropout: 0.1
+encoder_embedding_dim: 512
+sample_rate: 16000
+gcc_dim: 17
+gcc_config:
+    max_delay: [8]
+    center: True
+    n_fft: 512
+    window_length: 400
+    hop_length: 160
+normalize_target: True
