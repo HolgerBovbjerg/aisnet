@@ -2,7 +2,8 @@ defaults:
     - feature_extractor: stft
     - encoder: lstm
 feature_extractor:
-    output_type: real_imag
+    config:
+        output_type: real_imag
 n_feature_channels: 2
 feature_dim: 514
 feature_projection: True
