@@ -42,9 +42,7 @@ class NeuralGCC(nn.Module):
         self.gcc = GCC(**asdict(gcc_config))
         self.gcc_dim = gcc_dim
         self.decoder = decoder if decoder is not None \
-            else nn.Conv1d(in_channels=encoder_embedding_dim,
-                           out_channels=self.gcc_dim,
-                           kernel_size=1, stride=1)
+            else nn.Linear(in_features=encoder_embedding_dim, out_features=self.gcc_dim)
         self.normalize_target = normalize_target
 
     def forward(self, x: torch.Tensor, lengths: torch.Tensor, target: Optional[torch.Tensor] = None,
