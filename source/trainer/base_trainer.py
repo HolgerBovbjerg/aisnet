@@ -72,7 +72,7 @@ class BaseTrainer:
                 logger.info("Training using CUDA AMP.")
                 self.scaler = torch.amp.GradScaler(device="cuda")
             else:
-                logger.info("'use_cuda_amp is set to True but CUDA is not available. Reverting to training without AMP.")
+                logger.warning("'use_cuda_amp is set to True but CUDA is not available. Reverting to training without AMP.")
                 self.use_cuda_amp = False
         self.early_stopping_patience = config.training.early_stopping_patience
         self.early_stopping_min_epochs = config.training.early_stopping_min_epochs
