@@ -8,6 +8,23 @@ from source.nnet.modules.input_projection import InputProjection
 from source.nnet.utils.masking import lengths_to_padding_mask
 
 
+class SSLSARDecoder(nn.Module):
+    def __init__(self, input_size, output_size, hidden_dim: int = 3072):
+        super().__init__()
+        self.input_size = input_size
+        self.output_size = output_size
+        self.hidden_dim = hidden_dim
+        self.fc1 = nn.Linear(input_size, hidden_dim)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_dim, output_size)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        return x
+
+
 class SSLSAR(nn.Module):
     """
     SSLSAR main module.
@@ -50,9 +67,9 @@ class SSLSAR(nn.Module):
             torch.FloatTensor(self.feature_dim).uniform_()
         )
         self.decoder = decoder if decoder is not None \
-            else nn.Conv1d(in_channels=self.spatial_encoder_embedding_dim + self.spectral_encoder_embedding_dim,
-                           out_channels=self.feature_dim * n_feature_channels,
-                           kernel_size=1, stride=1)
+            else SSLSARDecoder(input_size=self.spatial_encoder_embedding_dim + self.spectral_encoder_embedding_dim,
+                               output_size=self.feature_dim * self.n_feature_channels,
+                               hidden_dim=3072)
 
     def forward(self, x: torch.Tensor, lengths: torch.Tensor, target: Optional[torch.Tensor] = None):
         # Initial length of input
@@ -81,11 +98,11 @@ class SSLSAR(nn.Module):
         spatial_mask = torch.concat([mask, mask], dim=1)
         # Clone spatial mask
         spectral_mask = spatial_mask.clone()
-        # Randomly choose whether to invert channel 0 or channel 1
-        invert_channel_0 = torch.rand(spectral_mask.size(0), device=spectral_mask.device) > 0.5
-        # Random mask inversion
-        spectral_mask[invert_channel_0, 0] = ~spectral_mask[invert_channel_0, 0]
-        spectral_mask[~invert_channel_0, 1] = ~spectral_mask[~invert_channel_0, 1]
+        # Randomly choose channel 0 or channel 1 as target
+        target_channel_0 = torch.rand(spectral_mask.size(0), device=spectral_mask.device) > 0.5
+        # Random invert spectral mask for channel which is not target
+        spectral_mask[target_channel_0, 0] = ~spectral_mask[target_channel_0, 0]
+        spectral_mask[~target_channel_0, 1] = ~spectral_mask[~target_channel_0, 1]
         # Ensure padding is not masked
         padding_mask = lengths_to_padding_mask(lengths).unsqueeze(1).repeat(1, 2, 1)
         spatial_mask[padding_mask] = False
@@ -111,17 +128,16 @@ class SSLSAR(nn.Module):
         # Concatenate spectral and spatial features
         x = torch.concat([x_spectral, x_spatial], dim=-1)
 
-        # Put encoded features through decoder to predict target
-        x = self.decoder(x.transpose(-1, -2)).reshape(x.size(0), self.n_feature_channels, x.size(1), -1)
+        # Put encoded features through decoder to predict target and reshape to have prediction for each channel
+        x = self.decoder(x).reshape(x.size(0), x.size(1), self.n_feature_channels, -1).transpose(1, 2)
 
+        # Generate prediction and target (randomly selected channel)
+        x = x[torch.stack([target_channel_0, ~target_channel_0], dim=-1)]
+        target = target[torch.stack([target_channel_0, ~target_channel_0], dim=-1)]
 
-        x_spectral = x[spectral_mask]
-        x_spatial = x[spatial_mask]
-        target_spectral = target[spectral_mask]
-        target_spatial = target[spatial_mask]
-
-        x = torch.concat([x_spectral, x_spatial], dim=0)
-        target = torch.concat([target_spectral, target_spatial], dim=0)
+        # Select only masked part
+        x = x[mask[:, 0]]
+        target = target[mask[:, 0]]
 
         return x, target, lengths
 

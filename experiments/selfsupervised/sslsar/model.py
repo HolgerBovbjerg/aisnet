@@ -20,14 +20,16 @@ class ModelConfig:
     feature_dim: int
     spectral_encoder_embedding_dim: int
     spatial_encoder_embedding_dim: int
+    spectral_encoder_num_layers: int
+    spatial_encoder_num_layers: int
+    feature_extractor: Union[FeatureExtractorConfig, dict]
+    mask_generator: Union[MaskGeneratorConfig, dict]
+    spatial_encoder: Union[EncoderConfig, dict]
+    spectral_encoder: Union[EncoderConfig, dict]
     n_feature_channels: int = 2
     feature_projection: bool = True
     feature_dropout: float = 0.
     feature_dropout_first: bool = False
-    feature_extractor: Optional[Union[FeatureExtractorConfig, dict]] = None
-    mask_generator: Optional[Union[MaskGeneratorConfig, dict]] = None
-    spatial_encoder: Optional[Union[EncoderConfig, dict]] = None
-    spectral_encoder: Optional[Union[EncoderConfig, dict]] = None
     decoder: Optional[nn.Module] = None
     sample_rate: int = 16000
 

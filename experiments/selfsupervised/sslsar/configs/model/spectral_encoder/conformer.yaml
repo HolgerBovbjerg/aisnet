@@ -3,7 +3,7 @@ config:
     input_dim: ${model.spectral_encoder_embedding_dim}
     ffn_dim: ${eval:'${model.spectral_encoder.config.num_heads} * ${model.spectral_encoder_embedding_dim}'}
     num_heads: 4
-    num_layers: 3
+    num_layers: ${model.spectral_encoder_num_layers}
     depthwise_conv_kernel_size: 31
     dropout: 0.
     use_group_norm: False
