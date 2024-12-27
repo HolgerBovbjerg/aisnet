@@ -17,5 +17,5 @@ exp_name: sslsar
 start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data/
-force_restart: True
+force_restart: False
 
