@@ -1,0 +1,29 @@
+defaults:
+    - model: stft_real_imag_lstm
+    - data: default
+    - augment: default
+    - loss: mse
+    - optimizer: adamw
+    - scheduler: cosine_annealing_warmup_restart
+    - training: default
+    - job: default
+    - wandb: default
+    - hydra: default
+    - _self_
+
+experiment_type: "selfsupervised.neural_gcc"
+exp_dir: ./runs/neural_gcc
+exp_name: neural_gcc
+start_stage: 0
+stop_stage: 100
+data_path: /home/es.aau.dk/jg96xg/Data/
+force_restart: False
+augment: null
+data:
+    train:
+        clean_and_noisy: False
+    validation:
+        clean_and_noisy: False
+    test:
+        clean_and_noisy: False
+    collate_fn: pad_collate
