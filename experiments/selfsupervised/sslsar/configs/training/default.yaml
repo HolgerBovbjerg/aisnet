@@ -1,8 +1,8 @@
 seed: 0
 num_epochs: 100
-batch_size: 64
+batch_size: 1 # Batching handled in datapipe
 gradient_accumulation_steps: 1
-use_cuda_amp: True
+use_cuda_amp: False
 clip_grad_norm: 1
 lr: 0.01
 early_stopping_min_epochs: 10
