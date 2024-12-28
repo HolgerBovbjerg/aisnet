@@ -11,6 +11,6 @@ buffer_size: 10000
 max_token_count: 2400000
 load_from: raw
 clean_and_noisy: True
-segment_max_size: null
+segment_max_size: 80000
 min_length: 8000
 hrtf_folder: ${data_path}/HRTFs/ARI/ari_splits/train/

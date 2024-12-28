@@ -1,5 +1,4 @@
 from typing import Optional
-import copy
 from dataclasses import asdict
 
 import torch
@@ -8,7 +7,7 @@ from torch.nn import functional as F
 
 from source.nnet.feature_extraction import GCC, GCCConfig
 from source.nnet.modules.input_projection import InputProjection
-
+from source.nnet.utils.masking import lengths_to_padding_mask
 
 class NeuralGCC(nn.Module):
     """
@@ -85,11 +84,17 @@ class NeuralGCC(nn.Module):
         # If only features are needed return them
         if extract_features:
             return x
+
         # Else put encoded features through post_network to predict target
-        x = self.decoder(x.transpose(-1, -2))
+        x = self.decoder(x)
 
         if self.normalize_target:
-            target = F.instance_norm(target)
+            target = F.instance_norm(target).transpose(1, 2)
+
+        # Remove padding
+        padding_mask = lengths_to_padding_mask(lengths)
+        x = x[~padding_mask]
+        target = target[~padding_mask]
 
         return x, target, lengths
 

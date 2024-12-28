@@ -22,6 +22,7 @@ class ModelConfig:
     feature_dim: int
     gcc_dim: int
     encoder_embedding_dim: int
+    encoder_num_layers: int
     n_feature_channels: int = 1
     feature_projection: bool = True
     feature_dropout: float = 0.

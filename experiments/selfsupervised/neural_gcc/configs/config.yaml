@@ -1,5 +1,5 @@
 defaults:
-    - model: stft_power_phase_lstm
+    - model: stft_real_imag_lstm
     - data: default
     - augment: default
     - loss: mse

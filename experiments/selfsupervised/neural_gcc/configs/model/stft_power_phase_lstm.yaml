@@ -5,7 +5,8 @@ n_feature_channels: 2
 feature_dim: 514
 feature_projection: True
 feature_dropout: 0.1
-encoder_embedding_dim: 512
+encoder_embedding_dim: 256
+encoder_num_layers: 3
 sample_rate: 16000
 gcc_dim: 17
 gcc_config:
