@@ -253,9 +253,9 @@ class BaseTrainer:
         :return: None
         """
         if ((self.batch_index + 1) % self.gradient_accumulation_steps) == 0:
-            if self.use_cuda_amp:
-                self.scaler.unscale_(self.optimizer)
             if self.clip_grad_norm:
+                if self.use_cuda_amp:
+                    self.scaler.unscale_(self.optimizer)
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
             self.step()
 
