@@ -46,7 +46,7 @@ class NeuralGCCTrainer(BaseTrainer):
         predictions, targets, lengths = self.model(input_data, lengths=lengths, target=targets)
 
         # Compute loss
-        loss = self.criterion(predictions, targets) / lengths.sum()
+        loss = self.criterion(predictions, targets)
         return loss, predictions, targets
 
     # Define custom function to compute metrics. Should always return a dict with 'metric_name: value' key/value pairs.
