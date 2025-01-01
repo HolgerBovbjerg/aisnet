@@ -13,7 +13,7 @@ defaults:
 
 experiment_type: "selfsupervised.neural_gcc"
 exp_dir: ./runs/neural_gcc
-exp_name: neural_gcc
+exp_name: neural_gcc_clean
 start_stage: 0
 stop_stage: 100
 data_path: /home/es.aau.dk/jg96xg/Data/
